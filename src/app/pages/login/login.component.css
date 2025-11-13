@@ -1,0 +1,12 @@
+/* Basic styling for login page */
+form {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  margin: 0 auto;
+}
+
+input, button {
+  margin: 10px 0;
+  padding: 8px;
+}
