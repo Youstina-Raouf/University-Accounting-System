@@ -1,0 +1,362 @@
+import { Injectable } from '@angular/core';
+
+export type UserRole = 'admin' | 'accounting' | 'student';
+
+export interface User {
+  id: string;
+  username: string;
+  password: string;
+  role: UserRole;
+  firstname: string;
+  lastname: string;
+  email: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface FeeCategory {
+  id: string;
+  name: string;
+  description: string;
+  amount: number;
+  isActive: boolean;
+}
+
+export interface FeeStructure {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  academicYear: string;
+  amount: number;
+  dueDate: string;
+  isActive: boolean;
+}
+
+export interface PaymentPolicy {
+  id: string;
+  policyType: 'deadline' | 'penalty' | 'installment' | 'refund';
+  name: string;
+  description: string;
+  value: number; // percentage or amount
+  isActive: boolean;
+}
+
+export interface Payment {
+  id: string;
+  userId: string;
+  username: string;
+  feeStructureId: string;
+  amount: number;
+  paymentDate: string;
+  status: 'pending' | 'completed' | 'refunded';
+  paymentMethod: string;
+}
+
+export interface RefundRequest {
+  id: string;
+  userId: string;
+  username: string;
+  paymentId: string;
+  amount: number;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedDate: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AdminService {
+  private usersKey = 'users';
+  private feeCategoriesKey = 'feeCategories';
+  private feeStructuresKey = 'feeStructures';
+  private paymentPoliciesKey = 'paymentPolicies';
+  private paymentsKey = 'payments';
+  private refundRequestsKey = 'refundRequests';
+
+  constructor() {
+    this.initializeData();
+  }
+
+  private initializeData() {
+    // Initialize fee categories
+    if (!localStorage.getItem(this.feeCategoriesKey)) {
+      const defaultCategories: FeeCategory[] = [
+        { id: '1', name: 'Tuition Fee', description: 'Annual tuition fee', amount: 5000, isActive: true },
+        { id: '2', name: 'Registration Fee', description: 'Registration fee', amount: 500, isActive: true },
+        { id: '3', name: 'Library Fee', description: 'Library access fee', amount: 200, isActive: true }
+      ];
+      localStorage.setItem(this.feeCategoriesKey, JSON.stringify(defaultCategories));
+    }
+
+    // Initialize fee structures
+    if (!localStorage.getItem(this.feeStructuresKey)) {
+      const currentYear = new Date().getFullYear();
+      const defaultStructures: FeeStructure[] = [
+        { id: '1', categoryId: '1', categoryName: 'Tuition Fee', academicYear: `${currentYear}-${currentYear + 1}`, amount: 5000, dueDate: new Date(currentYear, 8, 1).toISOString(), isActive: true },
+        { id: '2', categoryId: '2', categoryName: 'Registration Fee', academicYear: `${currentYear}-${currentYear + 1}`, amount: 500, dueDate: new Date(currentYear, 8, 1).toISOString(), isActive: true }
+      ];
+      localStorage.setItem(this.feeStructuresKey, JSON.stringify(defaultStructures));
+    }
+
+    // Initialize payment policies
+    if (!localStorage.getItem(this.paymentPoliciesKey)) {
+      const defaultPolicies: PaymentPolicy[] = [
+        { id: '1', policyType: 'deadline', name: 'Fall Semester Deadline', description: 'Payment deadline for fall semester', value: 30, isActive: true },
+        { id: '2', policyType: 'penalty', name: 'Late Payment Penalty', description: 'Penalty for late payments', value: 5, isActive: true },
+        { id: '3', policyType: 'installment', name: 'Installment Plan', description: 'Maximum installments allowed', value: 3, isActive: true }
+      ];
+      localStorage.setItem(this.paymentPoliciesKey, JSON.stringify(defaultPolicies));
+    }
+
+    // Initialize payments
+    if (!localStorage.getItem(this.paymentsKey)) {
+      localStorage.setItem(this.paymentsKey, JSON.stringify([]));
+    }
+
+    // Initialize refund requests
+    if (!localStorage.getItem(this.refundRequestsKey)) {
+      localStorage.setItem(this.refundRequestsKey, JSON.stringify([]));
+    }
+  }
+
+  // User Management
+  getUsers(): User[] {
+    const users = localStorage.getItem(this.usersKey);
+    if (!users) return [];
+    const allUsers = JSON.parse(users);
+    return allUsers.map((u: any, index: number) => ({
+      id: u.id || `user-${index}`,
+      username: u.username,
+      password: u.password || '',
+      role: u.role,
+      firstname: u.firstname || '',
+      lastname: u.lastname || '',
+      email: u.email || '',
+      isActive: u.isActive !== undefined ? u.isActive : true,
+      createdAt: u.createdAt || new Date().toISOString()
+    }));
+  }
+
+  createUser(user: Omit<User, 'id' | 'createdAt'>): User {
+    const users = this.getUsers();
+    const newUser: User = {
+      ...user,
+      id: `user-${Date.now()}`,
+      createdAt: new Date().toISOString()
+    };
+    users.push(newUser);
+    localStorage.setItem(this.usersKey, JSON.stringify(users));
+    return newUser;
+  }
+
+  updateUser(id: string, updates: Partial<User>): boolean {
+    const users = this.getUsers();
+    const index = users.findIndex(u => u.id === id);
+    if (index === -1) return false;
+    users[index] = { ...users[index], ...updates };
+    localStorage.setItem(this.usersKey, JSON.stringify(users));
+    return true;
+  }
+
+  deleteUser(id: string): boolean {
+    const users = this.getUsers();
+    const filtered = users.filter(u => u.id !== id);
+    if (filtered.length === users.length) return false;
+    localStorage.setItem(this.usersKey, JSON.stringify(filtered));
+    return true;
+  }
+
+  // Fee Category Management
+  getFeeCategories(): FeeCategory[] {
+    const categories = localStorage.getItem(this.feeCategoriesKey);
+    return categories ? JSON.parse(categories) : [];
+  }
+
+  createFeeCategory(category: Omit<FeeCategory, 'id'>): FeeCategory {
+    const categories = this.getFeeCategories();
+    const newCategory: FeeCategory = {
+      ...category,
+      id: `category-${Date.now()}`
+    };
+    categories.push(newCategory);
+    localStorage.setItem(this.feeCategoriesKey, JSON.stringify(categories));
+    return newCategory;
+  }
+
+  updateFeeCategory(id: string, updates: Partial<FeeCategory>): boolean {
+    const categories = this.getFeeCategories();
+    const index = categories.findIndex(c => c.id === id);
+    if (index === -1) return false;
+    categories[index] = { ...categories[index], ...updates };
+    localStorage.setItem(this.feeCategoriesKey, JSON.stringify(categories));
+    return true;
+  }
+
+  deleteFeeCategory(id: string): boolean {
+    const categories = this.getFeeCategories();
+    const filtered = categories.filter(c => c.id !== id);
+    if (filtered.length === categories.length) return false;
+    localStorage.setItem(this.feeCategoriesKey, JSON.stringify(filtered));
+    return true;
+  }
+
+  // Fee Structure Management
+  getFeeStructures(): FeeStructure[] {
+    const structures = localStorage.getItem(this.feeStructuresKey);
+    return structures ? JSON.parse(structures) : [];
+  }
+
+  createFeeStructure(structure: Omit<FeeStructure, 'id' | 'categoryName'>): FeeStructure {
+    const structures = this.getFeeStructures();
+    const category = this.getFeeCategories().find(c => c.id === structure.categoryId);
+    const newStructure: FeeStructure = {
+      ...structure,
+      id: `structure-${Date.now()}`,
+      categoryName: category?.name || ''
+    };
+    structures.push(newStructure);
+    localStorage.setItem(this.feeStructuresKey, JSON.stringify(structures));
+    return newStructure;
+  }
+
+  updateFeeStructure(id: string, updates: Partial<FeeStructure>): boolean {
+    const structures = this.getFeeStructures();
+    const index = structures.findIndex(s => s.id === id);
+    if (index === -1) return false;
+    if (updates.categoryId) {
+      const category = this.getFeeCategories().find(c => c.id === updates.categoryId);
+      updates.categoryName = category?.name || '';
+    }
+    structures[index] = { ...structures[index], ...updates };
+    localStorage.setItem(this.feeStructuresKey, JSON.stringify(structures));
+    return true;
+  }
+
+  deleteFeeStructure(id: string): boolean {
+    const structures = this.getFeeStructures();
+    const filtered = structures.filter(s => s.id !== id);
+    if (filtered.length === structures.length) return false;
+    localStorage.setItem(this.feeStructuresKey, JSON.stringify(filtered));
+    return true;
+  }
+
+  // Payment Policy Management
+  getPaymentPolicies(): PaymentPolicy[] {
+    const policies = localStorage.getItem(this.paymentPoliciesKey);
+    return policies ? JSON.parse(policies) : [];
+  }
+
+  createPaymentPolicy(policy: Omit<PaymentPolicy, 'id'>): PaymentPolicy {
+    const policies = this.getPaymentPolicies();
+    const newPolicy: PaymentPolicy = {
+      ...policy,
+      id: `policy-${Date.now()}`
+    };
+    policies.push(newPolicy);
+    localStorage.setItem(this.paymentPoliciesKey, JSON.stringify(policies));
+    return newPolicy;
+  }
+
+  updatePaymentPolicy(id: string, updates: Partial<PaymentPolicy>): boolean {
+    const policies = this.getPaymentPolicies();
+    const index = policies.findIndex(p => p.id === id);
+    if (index === -1) return false;
+    policies[index] = { ...policies[index], ...updates };
+    localStorage.setItem(this.paymentPoliciesKey, JSON.stringify(policies));
+    return true;
+  }
+
+  deletePaymentPolicy(id: string): boolean {
+    const policies = this.getPaymentPolicies();
+    const filtered = policies.filter(p => p.id !== id);
+    if (filtered.length === policies.length) return false;
+    localStorage.setItem(this.paymentPoliciesKey, JSON.stringify(filtered));
+    return true;
+  }
+
+  // Payment Management
+  getPayments(): Payment[] {
+    const payments = localStorage.getItem(this.paymentsKey);
+    return payments ? JSON.parse(payments) : [];
+  }
+
+  createPayment(payment: Omit<Payment, 'id'>): Payment {
+    const payments = this.getPayments();
+    const newPayment: Payment = {
+      ...payment,
+      id: `payment-${Date.now()}`
+    };
+    payments.push(newPayment);
+    localStorage.setItem(this.paymentsKey, JSON.stringify(payments));
+    return newPayment;
+  }
+
+  // Refund Management
+  getRefundRequests(): RefundRequest[] {
+    const requests = localStorage.getItem(this.refundRequestsKey);
+    return requests ? JSON.parse(requests) : [];
+  }
+
+  createRefundRequest(request: Omit<RefundRequest, 'id' | 'requestedDate' | 'status'>): RefundRequest {
+    const requests = this.getRefundRequests();
+    const newRequest: RefundRequest = {
+      ...request,
+      id: `refund-${Date.now()}`,
+      requestedDate: new Date().toISOString(),
+      status: 'pending'
+    };
+    requests.push(newRequest);
+    localStorage.setItem(this.refundRequestsKey, JSON.stringify(requests));
+    return newRequest;
+  }
+
+  updateRefundRequest(id: string, updates: Partial<RefundRequest>): boolean {
+    const requests = this.getRefundRequests();
+    const index = requests.findIndex(r => r.id === id);
+    if (index === -1) return false;
+    requests[index] = { ...requests[index], ...updates };
+    localStorage.setItem(this.refundRequestsKey, JSON.stringify(requests));
+    return true;
+  }
+
+  // Reporting
+  getTotalRevenue(): number {
+    const payments = this.getPayments();
+    return payments
+      .filter(p => p.status === 'completed')
+      .reduce((sum, p) => sum + p.amount, 0);
+  }
+
+  getUnpaidStudents(): any[] {
+    const users = this.getUsers().filter(u => u.role === 'student' && u.isActive);
+    const payments = this.getPayments();
+    const feeStructures = this.getFeeStructures();
+    
+    return users.map(user => {
+      const userPayments = payments.filter(p => p.userId === user.id && p.status === 'completed');
+      const totalPaid = userPayments.reduce((sum, p) => sum + p.amount, 0);
+      const totalDue = feeStructures
+        .filter(fs => fs.isActive)
+        .reduce((sum, fs) => sum + fs.amount, 0);
+      const unpaid = totalDue - totalPaid;
+      
+      return {
+        userId: user.id,
+        username: user.username,
+        name: `${user.firstname} ${user.lastname}`,
+        email: user.email,
+        totalDue,
+        totalPaid,
+        unpaid: unpaid > 0 ? unpaid : 0
+      };
+    }).filter(s => s.unpaid > 0);
+  }
+
+  getPaymentHistory(): Payment[] {
+    return this.getPayments().sort((a, b) => 
+      new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
+    );
+  }
+}
+
