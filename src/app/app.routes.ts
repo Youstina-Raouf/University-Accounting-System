@@ -1,26 +1,20 @@
 import { Routes } from '@angular/router';
-
-import { LoginComponent } from './pages/login/login.component';
-import { SignupComponent } from './pages/signup/signup.component';
-import { ProfileComponent } from './pages/profile/profile.component';
-import { AdminHomeComponent } from './pages/admin-home/admin-home.component';
-import { AccountingHomeComponent } from './pages/accounting-home/accounting-home.component';
-import { StudentHomeComponent } from './pages/student-home/student-home.component';
 import { AuthGuard } from './guards/auth.guard';
 
+// Use lazy-loaded standalone components via loadComponent for faster initial load
 export const routes: Routes = [
 
   { path: '', redirectTo: '/login', pathMatch: 'full' },
 
   // PUBLIC ROUTES (NO GUARDS)
-  { path: 'login', component: LoginComponent, data: { public: true } },
-  { path: 'signup', component: SignupComponent, data: { public: true } },
+  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), data: { public: true } },
+  { path: 'signup', loadComponent: () => import('./pages/signup/signup.component').then(m => m.SignupComponent), data: { public: true } },
 
-  // PROTECTED ROUTES
-  { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
-  { path: 'admin', component: AdminHomeComponent, canActivate: [AuthGuard], data: { roles: ['admin'] }},
-  { path: 'accounting', component: AccountingHomeComponent, canActivate: [AuthGuard], data: { roles: ['accounting'] }},
-  { path: 'student', component: StudentHomeComponent, canActivate: [AuthGuard], data: { roles: ['student'] }},
+  // PROTECTED ROUTES (lazy-loaded standalone components)
+  { path: 'profile', loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent), canActivate: [AuthGuard] },
+  { path: 'admin', loadComponent: () => import('./pages/admin-home/admin-home.component').then(m => m.AdminHomeComponent), canActivate: [AuthGuard], data: { roles: ['admin'] }},
+  { path: 'accounting', loadComponent: () => import('./pages/accounting-home/accounting-home.component').then(m => m.AccountingHomeComponent), canActivate: [AuthGuard], data: { roles: ['accounting'] }},
+  { path: 'student', loadComponent: () => import('./pages/student-home/student-home.component').then(m => m.StudentHomeComponent), canActivate: [AuthGuard], data: { roles: ['student'] }},
 
   { path: '**', redirectTo: '/login' }
 ];

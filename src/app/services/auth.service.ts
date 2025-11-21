@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { StorageService } from './storage.service';
 
 type UserRole = 'student' | 'admin' | 'accounting';
 
@@ -15,7 +16,7 @@ export class AuthService {
   private currentUserKey = 'currentUser';
   private usersKey = 'users';
 
-  constructor(private router: Router) {
+  constructor(private router: Router, private storageService: StorageService) {
     this.initializeUsers();
   }
 
@@ -25,7 +26,8 @@ export class AuthService {
     }
   }
 
-  login(username: string, password: string): boolean {
+  // login now records sessionStorage for current session and sets a cookie 'lastUser' for convenience
+  login(username: string, password: string, remember = false): boolean {
     try {
       const users = this.getUsers();
       
@@ -59,9 +61,21 @@ export class AuthService {
           (userToStore as any).email = user.email;
         }
         
-        localStorage.setItem(this.currentUserKey, JSON.stringify(userToStore));
-        console.log('User stored in localStorage:', userToStore);
+        // Store in sessionStorage for current session
+        try {
+          this.storageService.setSession(this.currentUserKey, userToStore);
+        } catch (e) {
+          // Fallback to localStorage if sessionStorage isn't available
+          localStorage.setItem(this.currentUserKey, JSON.stringify(userToStore));
+        }
+        console.log('User stored for session:', userToStore);
         
+        // If remember requested, persist minimal info in cookie and localStorage
+        if (remember) {
+          try { this.storageService.setCookie('lastUser', userToStore.username, 30); } catch(e){}
+          localStorage.setItem(this.currentUserKey, JSON.stringify(userToStore));
+        }
+
         // Verify it was stored correctly
         const stored = this.getCurrentUser();
         if (!stored || stored.username !== user.username || stored.role !== user.role) {
@@ -84,13 +98,19 @@ export class AuthService {
   }
 
   logout() {
-    localStorage.removeItem(this.currentUserKey);
+    try { this.storageService.removeSession(this.currentUserKey); } catch(e) { localStorage.removeItem(this.currentUserKey); }
+    try { this.storageService.deleteCookie('lastUser'); } catch(e) {}
     this.router.navigate(['/login']);
   }
 
   getCurrentUser(): User | null {
     try {
-      const userStr = localStorage.getItem(this.currentUserKey);
+      // Prefer sessionStorage (active session) over localStorage
+      let userStr = null;
+      try { userStr = this.storageService.getSession(this.currentUserKey) ? JSON.stringify(this.storageService.getSession(this.currentUserKey)) : null; } catch (e) { userStr = null; }
+      if (!userStr) {
+        userStr = localStorage.getItem(this.currentUserKey);
+      }
       if (!userStr) {
         return null;
       }

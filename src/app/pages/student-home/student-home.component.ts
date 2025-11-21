@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { StudentService } from '../../services/student.service';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
+import { SoundService } from '../../services/sound.service';
 import { FeeStructure, Payment } from '../../services/admin.service';
 
 @Component({
@@ -17,6 +18,7 @@ export class StudentHomeComponent implements OnInit {
   student: any = null;
   fees: FeeStructure[] = [];
   payments: Payment[] = [];
+  invoices: any[] = [];
   totalDue: number = 0;
   totalPaid: number = 0;
   outstandingBalance: number = 0;
@@ -37,7 +39,8 @@ export class StudentHomeComponent implements OnInit {
   constructor(
     private studentService: StudentService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private sound: SoundService
   ) {}
 
   ngOnInit() {
@@ -48,9 +51,79 @@ export class StudentHomeComponent implements OnInit {
     this.student = this.studentService.getCurrentStudent();
     this.fees = this.studentService.getStudentFees();
     this.payments = this.studentService.getStudentPayments();
+    this.invoices = this.studentService.getStudentInvoices();
     this.totalDue = this.studentService.getTotalDue();
     this.totalPaid = this.studentService.getTotalPaid();
     this.outstandingBalance = this.studentService.getOutstandingBalance();
+  }
+
+  // Create invoice modal
+  showCreateInvoiceModal = false;
+  newInvoice = { title: '', description: '', amount: 0, dueDate: '' };
+
+  openCreateInvoiceModal() {
+    this.newInvoice = { title: '', description: '', amount: 0, dueDate: '' };
+    this.showCreateInvoiceModal = true;
+  }
+
+  closeCreateInvoiceModal() {
+    this.showCreateInvoiceModal = false;
+  }
+
+  createInvoice() {
+    // client-side validation
+    this.invoiceError = '';
+    if (!this.newInvoice.title.trim() || this.newInvoice.amount <= 0) {
+      this.invoiceError = 'Please provide a title and a valid amount (greater than 0)';
+      return;
+    }
+
+    const user = this.studentService.getCurrentStudent();
+    if (!user) {
+      this.invoiceError = 'No logged in student';
+      return;
+    }
+
+    const created = (this.studentService as any).adminService.createInvoice({
+      userId: user.username,
+      username: user.username,
+      title: this.newInvoice.title,
+      description: this.newInvoice.description,
+      amount: this.newInvoice.amount,
+      dueDate: this.newInvoice.dueDate || undefined,
+      status: 'unpaid'
+    });
+
+    if (created) {
+      this.sound.playSuccess();
+      this.invoiceSuccess = 'Invoice created successfully';
+      setTimeout(() => this.invoiceSuccess = '', 2500);
+      this.closeCreateInvoiceModal();
+      this.loadStudentData();
+    } else {
+      this.invoiceError = 'Failed to create invoice';
+      this.sound.playError();
+    }
+  }
+
+  invoiceError = '';
+  invoiceSuccess = '';
+
+  // audio handled by SoundService
+
+  // Mark invoice as paid (creates a completed payment and updates invoice)
+  payInvoice(invoice: any) {
+    if (!confirm('Mark this invoice as paid?')) return;
+    const success = this.studentService.makePayment(invoice.amount, invoice.id, 'Invoice Payment');
+    if (success) {
+      (this.studentService as any).adminService.updateInvoice(invoice.id, { status: 'paid' });
+      this.sound.playSuccess();
+      alert('Invoice marked as paid');
+      this.loadStudentData();
+    } else {
+      this.sound.playError();
+      alert('Payment failed');
+    }
   }
 
   openPaymentModal(fee: FeeStructure) {
@@ -82,10 +155,12 @@ export class StudentHomeComponent implements OnInit {
       );
 
       if (success) {
+        this.sound.playSuccess();
         alert('Payment processed successfully!');
         this.closePaymentModal();
         this.loadStudentData();
       } else {
+        this.sound.playError();
         alert('Payment failed. Please try again.');
       }
       this.paymentProcessing = false;

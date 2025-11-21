@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { SoundService } from '../../services/sound.service';
 
 @Component({
   selector: 'app-login',
@@ -17,11 +18,13 @@ export class LoginComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
   returnUrl: string = '';
+  rememberMe: boolean = false;
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private sound: SoundService
   ) {}
 
   ngOnInit(): void {
@@ -58,12 +61,14 @@ export class LoginComponent implements OnInit {
           return;
         }
 
-        const success = this.authService.login(this.username.trim(), this.password);
+        const success = this.authService.login(this.username.trim(), this.password, this.rememberMe);
 
         if (success) {
           // Verify user is logged in
           const currentUser = this.authService.getCurrentUser();
           console.log('Login successful, current user:', currentUser);
+          // play success tone
+          try { this.sound.playSuccess(); } catch (e) { }
           
           if (!currentUser) {
             this.errorMessage = 'Failed to store user session. Please try again.';

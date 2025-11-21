@@ -47,6 +47,11 @@
       <div *ngIf="errorMessage" class="error-message">
         <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
       </div>
+
+      <div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
+        <input id="remember" type="checkbox" [(ngModel)]="rememberMe" name="remember" />
+        <label for="remember" style="margin:0;">Remember me</label>
+      </div>
       
       <button type="submit" class="login-button" [disabled]="isLoading">
         <span *ngIf="!isLoading">

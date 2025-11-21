@@ -1,19 +1,19 @@
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
 
 :root {
-  --primary-color: #4a6cf7;
-  --primary-hover: #3a5ce4;
+  --primary-color: #8B2B2B;
+  --primary-hover: #6e2323;
   --secondary-color: #6c757d;
-  --success-color: #38a169;
-  --danger-color: #e53e3e;
-  --warning-color: #d69e2e;
-  --text-color: #2d3748;
-  --text-light: #718096;
-  --bg-color: #f7fafc;
-  --card-bg: #ffffff;
-  --border-color: #e2e8f0;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --success-color: #3f7040;
+  --danger-color: #8B2B2B;
+  --warning-color: #c59b3a;
+  --text-color: #2e2e2e;
+  --text-light: #6e6e6e;
+  --bg-color: #f5efe6;
+  --card-bg: #f8f4ef;
+  --border-color: #e6ddd0;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 * {
@@ -86,9 +86,9 @@
 }
 
 .tab-btn {
-  background: transparent;
-  border: 2px solid var(--border-color);
-  color: var(--text-light);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;

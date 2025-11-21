@@ -67,6 +67,9 @@
     <!-- Fee Statements -->
     <div class="fees-section">
       <h2><i class="fas fa-receipt"></i> Fee Statements</h2>
+      <div style="margin-bottom:1rem; display:flex; gap:0.5rem;">
+        <button class="btn" (click)="openCreateInvoiceModal()"><i class="fas fa-file-invoice"></i> Create Invoice</button>
+      </div>
       <div class="table-container">
         <table class="data-table">
           <thead>
@@ -94,6 +97,20 @@
                 </button>
               </td>
             </tr>
+            <!-- invoices created by student -->
+            <tr *ngFor="let inv of invoices">
+              <td>{{ inv.title }}</td>
+              <td>—</td>
+              <td>{{ formatCurrency(inv.amount) }}</td>
+              <td>{{ inv.dueDate ? formatDate(inv.dueDate) : '—' }}</td>
+              <td>
+                <span class="status-badge" [class.active]="inv.status === 'unpaid'">{{ inv.status }}</span>
+              </td>
+              <td>
+                <button *ngIf="inv.status === 'unpaid'" class="btn btn-pay" (click)="payInvoice(inv)">Pay Invoice</button>
+                <span *ngIf="inv.status !== 'unpaid'">-</span>
+              </td>
+            </tr>
             <tr *ngIf="fees.length === 0">
               <td colspan="6" class="no-data">No fees available</td>
             </tr>
@@ -101,6 +118,46 @@
         </table>
       </div>
     </div>
+
+<!-- Create Invoice Modal -->
+<div class="modal-overlay" *ngIf="showCreateInvoiceModal" (click)="closeCreateInvoiceModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-file-invoice"></i> Create Invoice</h3>
+      <button class="modal-close" (click)="closeCreateInvoiceModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="invoiceError" class="error-message">
+        <i class="fas fa-exclamation-circle"></i> {{ invoiceError }}
+      </div>
+      <div *ngIf="invoiceSuccess" class="info-message" style="margin-bottom:0.75rem; color:var(--success-color); font-weight:600;">
+        {{ invoiceSuccess }}
+      </div>
+      <div class="form-group">
+        <label>Title *</label>
+        <input class="form-input" [(ngModel)]="newInvoice.title" />
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-input" rows="3" [(ngModel)]="newInvoice.description"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Amount *</label>
+        <input type="number" min="0.01" step="0.01" class="form-input" [(ngModel)]="newInvoice.amount" />
+      </div>
+      <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" class="form-input" [(ngModel)]="newInvoice.dueDate" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="closeCreateInvoiceModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="createInvoice()" [disabled]="!newInvoice.title.trim() || newInvoice.amount <= 0">Create Invoice</button>
+    </div>
+  </div>
+</div>
 
     <!-- Payment History -->
     <div class="payments-section">

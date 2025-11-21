@@ -31,6 +31,13 @@ export class StudentService {
     return allPayments.filter(p => p.userId === currentUser.username || p.username === currentUser.username);
   }
 
+  getStudentInvoices() {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) return [];
+    const allInvoices = this.adminService.getInvoices ? this.adminService.getInvoices() : [];
+    return allInvoices.filter((inv: any) => inv.userId === currentUser.username || inv.username === currentUser.username);
+  }
+
   getOutstandingBalance(): number {
     const fees = this.getStudentFees();
     const payments = this.getStudentPayments();

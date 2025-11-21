@@ -63,6 +63,18 @@ export interface RefundRequest {
   requestedDate: string;
 }
 
+export interface Invoice {
+  id: string;
+  userId: string;
+  username: string;
+  title: string;
+  description?: string;
+  amount: number;
+  createdDate: string;
+  dueDate?: string;
+  status: 'unpaid' | 'paid' | 'cancelled';
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -73,6 +85,7 @@ export class AdminService {
   private paymentPoliciesKey = 'paymentPolicies';
   private paymentsKey = 'payments';
   private refundRequestsKey = 'refundRequests';
+  private invoicesKey = 'invoices';
 
   constructor() {
     this.initializeData();
@@ -117,6 +130,11 @@ export class AdminService {
     // Initialize refund requests
     if (!localStorage.getItem(this.refundRequestsKey)) {
       localStorage.setItem(this.refundRequestsKey, JSON.stringify([]));
+    }
+
+    // Initialize invoices
+    if (!localStorage.getItem(this.invoicesKey)) {
+      localStorage.setItem(this.invoicesKey, JSON.stringify([]));
     }
   }
 
@@ -309,6 +327,33 @@ export class AdminService {
     requests.push(newRequest);
     localStorage.setItem(this.refundRequestsKey, JSON.stringify(requests));
     return newRequest;
+  }
+
+  // Invoice Management (simple per-user invoices)
+  getInvoices(): Invoice[] {
+    const raw = localStorage.getItem(this.invoicesKey);
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  createInvoice(invoice: Omit<Invoice, 'id' | 'createdDate'>): Invoice {
+    const invoices = this.getInvoices();
+    const newInv: Invoice = {
+      ...invoice,
+      id: `invoice-${Date.now()}`,
+      createdDate: new Date().toISOString()
+    };
+    invoices.push(newInv);
+    localStorage.setItem(this.invoicesKey, JSON.stringify(invoices));
+    return newInv;
+  }
+
+  updateInvoice(id: string, updates: Partial<Invoice>): boolean {
+    const invoices = this.getInvoices();
+    const idx = invoices.findIndex(i => i.id === id);
+    if (idx === -1) return false;
+    invoices[idx] = { ...invoices[idx], ...updates };
+    localStorage.setItem(this.invoicesKey, JSON.stringify(invoices));
+    return true;
   }
 
   updateRefundRequest(id: string, updates: Partial<RefundRequest>): boolean {

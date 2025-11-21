@@ -1,18 +1,18 @@
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
 
 :root {
-  --primary-color: #4a6cf7;
-  --primary-hover: #3a5ce4;
-  --success-color: #38a169;
-  --danger-color: #e53e3e;
-  --warning-color: #d69e2e;
-  --text-color: #2d3748;
-  --text-light: #718096;
-  --bg-color: #f7fafc;
-  --card-bg: #ffffff;
-  --border-color: #e2e8f0;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --primary-color: #8B2B2B; /* dull university red */
+  --primary-hover: #6e2323;
+  --success-color: #3f7040; /* muted green */
+  --danger-color: #8B2B2B;
+  --warning-color: #c59b3a;
+  --text-color: #2e2e2e;
+  --text-light: #6e6e6e;
+  --bg-color: #f5efe6; /* beige background */
+  --card-bg: #f8f4ef; /* slightly off-white card */
+  --border-color: #e6ddd0;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .student-container {
@@ -258,6 +258,12 @@
   font-size: 0.875rem;
 }
 
+/* ensure buttons are visible even when not hovering */
+.btn {
+  background: var(--primary-color);
+  color: white;
+}
+
 .btn-pay {
   background: var(--success-color);
   color: white;
@@ -344,6 +350,12 @@
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
+  animation: modalZoomIn 180ms ease;
+}
+
+@keyframes modalZoomIn {
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .modal-header {
@@ -366,7 +378,7 @@
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: var(--text-light);
+  color: var(--text-color);
   cursor: pointer;
   padding: 0;
   width: 2rem;
@@ -426,7 +438,7 @@
 .form-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.15);
+  box-shadow: 0 0 0 3px rgba(139, 43, 43, 0.08);
 }
 
 textarea.form-input {
