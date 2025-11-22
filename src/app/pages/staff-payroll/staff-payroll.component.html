@@ -1,0 +1,17 @@
+<div class="payroll-container">
+  <h2>Staff Payroll</h2>
+  <p>Basic payroll scaffold (mock)</p>
+  <table class="data-table">
+    <thead>
+      <tr><th>Name</th><th>Role</th><th>Salary</th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let s of staff">
+        <td>{{ s.name }}</td>
+        <td>{{ s.role }}</td>
+        <td>{{ s.salary | currency }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="btn" (click)="payAll()">Process Payroll (mock)</button>
+</div>

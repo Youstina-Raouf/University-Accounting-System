@@ -4,7 +4,8 @@ import { AuthGuard } from './guards/auth.guard';
 // Use lazy-loaded standalone components via loadComponent for faster initial load
 export const routes: Routes = [
 
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  // PUBLIC LANDING
+  { path: '', loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent), data: { public: true } },
 
   // PUBLIC ROUTES (NO GUARDS)
   { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), data: { public: true } },
@@ -16,5 +17,9 @@ export const routes: Routes = [
   { path: 'accounting', loadComponent: () => import('./pages/accounting-home/accounting-home.component').then(m => m.AccountingHomeComponent), canActivate: [AuthGuard], data: { roles: ['accounting'] }},
   { path: 'student', loadComponent: () => import('./pages/student-home/student-home.component').then(m => m.StudentHomeComponent), canActivate: [AuthGuard], data: { roles: ['student'] }},
 
-  { path: '**', redirectTo: '/login' }
+  // New admin/accounting tools
+  { path: 'staff-payroll', loadComponent: () => import('./pages/staff-payroll/staff-payroll.component').then(m => m.StaffPayrollComponent), canActivate: [AuthGuard], data: { roles: ['admin'] } },
+  { path: 'department-budget', loadComponent: () => import('./pages/department-budget/department-budget.component').then(m => m.DepartmentBudgetComponent), canActivate: [AuthGuard], data: { roles: ['accounting'] } },
+
+  { path: '**', redirectTo: '' }
 ];

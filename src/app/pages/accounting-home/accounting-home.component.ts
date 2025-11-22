@@ -3,15 +3,19 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountingService } from '../../services/accounting.service';
 import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { User, FeeStructure, Payment } from '../../services/admin.service';
+
+// Charts
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration, ChartOptions } from 'chart.js';
 
 @Component({
   selector: 'app-accounting-home',
   templateUrl: './accounting-home.component.html',
   styleUrls: ['./accounting-home.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, BaseChartDirective, RouterModule]
 })
 export class AccountingHomeComponent implements OnInit {
   activeTab: string = 'students';
@@ -36,6 +40,25 @@ export class AccountingHomeComponent implements OnInit {
   selectedFeeStructure: string = '';
   paymentMethod: string = 'Manual';
   paymentProcessing = false;
+
+  // Chart data (sample)
+  public revenueChartOptions: ChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false
+  };
+
+  public revenueChartData: ChartConfiguration<'line'>['data'] = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    datasets: [
+      {
+        label: 'Revenue',
+        data: [12000, 15000, 14000, 18000, 22000, 20000],
+        borderColor: '#4f46e5',
+        backgroundColor: 'rgba(79,70,229,0.2)',
+        fill: true
+      }
+    ]
+  };
 
   constructor(
     public accountingService: AccountingService,

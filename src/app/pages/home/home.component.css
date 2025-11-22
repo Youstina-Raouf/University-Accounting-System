@@ -1,0 +1,17 @@
+.home-hero{
+	padding:48px 20px;
+	text-align:center;
+	background: linear-gradient(180deg, var(--primary-color) 0%, rgba(139,43,43,0.9) 100%);
+	color: #fff;
+}
+.hero-inner{max-width:900px;margin:0 auto}
+.lead{opacity:0.95;margin-top:8px}
+.cta{margin-top:20px;display:flex;gap:12px;justify-content:center}
+.btn{padding:10px 18px;border-radius:6px;text-decoration:none;color:#fff;display:inline-block;min-width:140px;text-align:center;font-weight:600}
+.btn-outline{background:transparent;border:2px solid rgba(255,255,255,.18);color:#fff;min-width:140px;text-align:center;font-weight:600}
+
+.home-features{display:flex;gap:18px;justify-content:center;margin:28px 12px}
+.feature{background:var(--card-bg);padding:18px;border-radius:8px;flex:1;max-width:320px;box-shadow:0 6px 16px rgba(0,0,0,0.04);color:var(--text-color)}
+.feature-icon{font-size:28px;color:var(--primary-color);margin-bottom:8px}
+.feature h3{margin:6px 0}
+.feature p{color:var(--text-light);margin:0}

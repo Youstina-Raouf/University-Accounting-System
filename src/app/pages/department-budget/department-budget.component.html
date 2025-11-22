@@ -1,0 +1,16 @@
+<div class="budget-container">
+  <h2>Department Budgets</h2>
+  <table class="data-table">
+    <thead>
+      <tr><th>Department</th><th>Allocated</th><th>Used</th><th>Remaining</th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let b of budgets">
+        <td>{{ b.dept }}</td>
+        <td>{{ b.allocated | currency }}</td>
+        <td>{{ b.used | currency }}</td>
+        <td>{{ (b.allocated - b.used) | currency }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

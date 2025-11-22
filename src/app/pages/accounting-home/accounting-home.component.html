@@ -2,9 +2,12 @@
   <div class="accounting-header">
     <div class="header-content">
       <h1><i class="fas fa-calculator"></i> Accounting Portal</h1>
-      <button class="logout-btn" (click)="logout()">
-        <i class="fas fa-sign-out-alt"></i> Logout
-      </button>
+      <div class="header-actions">
+        <a routerLink="/profile" class="btn btn-primary header-btn btn-animate"><i class="fas fa-user"></i> Profile</a>
+        <button class="logout-btn header-btn" (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
     </div>
   </div>
 
@@ -41,6 +44,14 @@
     <div *ngIf="activeTab === 'overview'" class="tab-content">
       <h2><i class="fas fa-chart-pie"></i> Overview</h2>
       
+      <div class="overview-chart" style="height:260px;margin-bottom:18px;">
+        <canvas baseChart
+          [data]="revenueChartData"
+          [options]="revenueChartOptions"
+          [type]="'line'">
+        </canvas>
+      </div>
+
       <div class="stats-grid">
         <div class="stat-card revenue">
           <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>

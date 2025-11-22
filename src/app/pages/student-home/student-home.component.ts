@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StudentService } from '../../services/student.service';
 import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { SoundService } from '../../services/sound.service';
 import { FeeStructure, Payment } from '../../services/admin.service';
 
@@ -12,7 +12,7 @@ import { FeeStructure, Payment } from '../../services/admin.service';
   templateUrl: './student-home.component.html',
   styleUrls: ['./student-home.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, RouterModule]
 })
 export class StudentHomeComponent implements OnInit {
   student: any = null;

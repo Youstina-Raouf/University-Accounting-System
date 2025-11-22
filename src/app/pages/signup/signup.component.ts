@@ -19,12 +19,19 @@ export class SignupComponent {
     username: '',
     password: '',
     confirmPassword: '',
-    role: ''
+    role: '',
+    cardNumber: '',
+    cardExpiry: '',
+    cardCvc: '',
+    prefNewsletter: false,
+    prefNotifications: false,
+    avatarBase64: ''
   };
 
   isLoading = false;
   errorMessage = '';
   successMessage = '';
+  avatarPreview: string | null = null;
 
   constructor(
     private router: Router,
@@ -32,7 +39,6 @@ export class SignupComponent {
   ) {}
 
   registerUser() {
-    // Validation
     if (!this.user.firstname.trim() || !this.user.lastname.trim() || 
         !this.user.email.trim() || !this.user.username.trim() || 
         !this.user.password || !this.user.role) {
@@ -54,12 +60,10 @@ export class SignupComponent {
     this.errorMessage = '';
     this.successMessage = '';
 
-    // Simulate API call
     setTimeout(() => {
       try {
-        // Save user to localStorage (in a real app, this would be an API call)
         const users = this.getUsers();
-        const existingUser = users.find(u => u.username === this.user.username);
+        const existingUser = users.find((u: any) => u.username === this.user.username);
         
         if (existingUser) {
           this.errorMessage = 'Username already exists';
@@ -67,24 +71,35 @@ export class SignupComponent {
           return;
         }
 
-        // Add new user
-        const newUser = {
+        const newUser: any = {
           username: this.user.username,
           password: this.user.password,
-          role: this.user.role as 'admin' | 'accounting' | 'student',
+          role: this.user.role,
           firstname: this.user.firstname,
           lastname: this.user.lastname,
           email: this.user.email
         };
 
+        if (this.user.avatarBase64) {
+          newUser.avatar = this.user.avatarBase64;
+        }
+        if (this.user.prefNewsletter) {
+          newUser.prefNewsletter = true;
+        }
+        if (this.user.prefNotifications) {
+          newUser.prefNotifications = true;
+        }
+        if (this.user.cardNumber && this.user.cardNumber.trim().length >= 4) {
+          const digits = this.user.cardNumber.replace(/\D/g, '');
+          newUser.cardLast4 = digits.slice(-4);
+        }
+
         users.push(newUser);
         localStorage.setItem('users', JSON.stringify(users));
 
-        // Auto-login the new user
         const { password, ...userWithoutPassword } = newUser;
         localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
 
-        // Redirect based on role
         if (this.user.role === 'admin') {
           this.router.navigate(['/admin']);
         } else if (this.user.role === 'accounting') {
@@ -100,6 +115,20 @@ export class SignupComponent {
     }, 500);
   }
 
+  onAvatarSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.avatarPreview = String(reader.result || '');
+      this.user.avatarBase64 = this.avatarPreview || '';
+    };
+    reader.readAsDataURL(file);
+  }
+
   private getUsers(): any[] {
     const users = localStorage.getItem('users');
     return users ? JSON.parse(users) : [];
@@ -109,3 +138,4 @@ export class SignupComponent {
     this.router.navigate(['/login']);
   }
 }
+

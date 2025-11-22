@@ -4,7 +4,8 @@
       <h1><i class="fas fa-user-graduate"></i> Student Portal</h1>
       <div class="header-actions">
         <span class="welcome-text">Welcome, {{ student?.firstname || student?.username || 'Student' }}!</span>
-        <button class="logout-btn" (click)="logout()">
+        <a routerLink="/profile" class="btn btn-primary header-btn btn-animate"><i class="fas fa-user"></i> Profile</a>
+        <button class="logout-btn header-btn" (click)="logout()">
           <i class="fas fa-sign-out-alt"></i> Logout
         </button>
       </div>
