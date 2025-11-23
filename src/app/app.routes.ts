@@ -22,6 +22,9 @@ export const routes: Routes = [
   // New admin/accounting tools
   { path: 'staff-payroll', loadComponent: () => import('./pages/staff-payroll/staff-payroll.component').then(m => m.StaffPayrollComponent), canActivate: [AuthGuard], data: { roles: ['admin'] } },
   { path: 'department-budget', loadComponent: () => import('./pages/department-budget/department-budget.component').then(m => m.DepartmentBudgetComponent), canActivate: [AuthGuard], data: { roles: ['admin', 'accounting'] } },
+  
+  // Payment routes
+  { path: 'credit-card-payment', loadComponent: () => import('./pages/credit-card-payment/credit-card-payment.component').then(m => m.CreditCardPaymentComponent), canActivate: [AuthGuard], data: { roles: ['student'] } },
 
   { path: '**', redirectTo: '' }
 ];

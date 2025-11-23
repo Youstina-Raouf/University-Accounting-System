@@ -139,6 +139,45 @@ export class StudentHomeComponent implements OnInit {
     this.paymentAmount = 0;
   }
 
+  onPaymentMethodChange(newValue: string) {
+    // Update paymentMethod with the new value
+    this.paymentMethod = newValue;
+    
+    // If Credit Card is selected, navigate to credit card payment page
+    if (newValue === 'Credit Card' && this.selectedFee) {
+      // Use the fee amount if payment amount is not set or is 0
+      const amount = (this.paymentAmount > 0) ? this.paymentAmount : this.selectedFee.amount;
+      
+      console.log('Navigating to credit card payment:', { 
+        paymentMethod: newValue,
+        amount: amount, 
+        feeId: this.selectedFee.id,
+        selectedFee: this.selectedFee
+      });
+      
+      // Close modal first
+      this.showPaymentModal = false;
+      
+      // Store fee info temporarily before navigation
+      const feeId = this.selectedFee.id;
+      
+      // Navigate to credit card payment page
+      setTimeout(() => {
+        this.router.navigate(['/credit-card-payment'], {
+          queryParams: {
+            amount: amount,
+            feeId: feeId
+          }
+        }).then(() => {
+          console.log('Navigation completed successfully');
+        }).catch(err => {
+          console.error('Navigation error:', err);
+          alert('Failed to navigate to payment page. Please try again.');
+        });
+      }, 150);
+    }
+  }
+
   processPayment() {
     if (!this.selectedFee || this.paymentAmount <= 0) {
       alert('Please select a fee and enter a valid amount');
