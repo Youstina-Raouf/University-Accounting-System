@@ -30,7 +30,7 @@ export class AuthService {
   login(username: string, password: string, remember = false): boolean {
     try {
       const users = this.getUsers();
-      
+
       if (!users || users.length === 0) {
         console.error('No users found in localStorage');
         return false;
@@ -49,7 +49,7 @@ export class AuthService {
           username: user.username,
           role: user.role
         };
-        
+
         // Add optional fields if they exist
         if (user.firstname) {
           (userToStore as any).firstname = user.firstname;
@@ -60,7 +60,7 @@ export class AuthService {
         if (user.email) {
           (userToStore as any).email = user.email;
         }
-        
+
         // Store in sessionStorage for current session
         try {
           this.storageService.setSession(this.currentUserKey, userToStore);
@@ -69,10 +69,16 @@ export class AuthService {
           localStorage.setItem(this.currentUserKey, JSON.stringify(userToStore));
         }
         console.log('User stored for session:', userToStore);
-        
+
         // If remember requested, persist minimal info in cookie and localStorage
         if (remember) {
-          try { this.storageService.setCookie('lastUser', userToStore.username, 30); } catch(e){}
+          try {
+            // Store username and (obfuscated) password in cookies for demo "remember me" behavior.
+            // NOTE: Storing plaintext passwords in client cookies is insecure. We base64-encode the password here
+            // only to avoid storing raw characters; this is NOT secure and should not be used in production.
+            this.storageService.setCookie('lastUser', userToStore.username, 30);
+            try { this.storageService.setCookie('lastPass', btoa(password), 30); } catch(e) { /* ignore */ }
+          } catch(e){}
           localStorage.setItem(this.currentUserKey, JSON.stringify(userToStore));
         }
 
@@ -82,13 +88,13 @@ export class AuthService {
           console.error('Failed to verify stored user');
           return false;
         }
-        
+
         return true;
       }
-      
-      console.error('User not found or password incorrect', { 
-        searchedUsername: trimmedUsername, 
-        availableUsers: users.map(u => u.username) 
+
+      console.error('User not found or password incorrect', {
+        searchedUsername: trimmedUsername,
+        availableUsers: users.map(u => u.username)
       });
       return false;
     } catch (error) {
@@ -100,6 +106,7 @@ export class AuthService {
   logout() {
     try { this.storageService.removeSession(this.currentUserKey); } catch(e) { localStorage.removeItem(this.currentUserKey); }
     try { this.storageService.deleteCookie('lastUser'); } catch(e) {}
+    try { this.storageService.deleteCookie('lastPass'); } catch(e) {}
     this.router.navigate(['/login']);
   }
 

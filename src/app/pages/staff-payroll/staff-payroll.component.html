@@ -9,9 +9,19 @@
       <tr *ngFor="let s of staff">
         <td>{{ s.name }}</td>
         <td>{{ s.role }}</td>
-        <td>{{ s.salary | currency }}</td>
+        <td>
+          <div>{{ s.salary | currency }}</div>
+          <div style="margin-top:6px; display:flex; gap:6px;">
+            <input type="number" [(ngModel)]="s.allowances" class="small-input" placeholder="Allowances" />
+            <input type="number" [(ngModel)]="s.deductions" class="small-input" placeholder="Deductions" />
+            <div style="align-self:center; font-weight:600;">Net: {{ netPay(s) | currency }}</div>
+          </div>
+        </td>
       </tr>
     </tbody>
   </table>
-  <button class="btn" (click)="payAll()">Process Payroll (mock)</button>
+  <div style="margin-top:12px; display:flex; gap:8px;">
+    <button class="btn" (click)="payAll()">Process Payroll (mock)</button>
+    <button class="btn" (click)="generateMonthlyReport()">Export Monthly Report (JSON)</button>
+  </div>
 </div>

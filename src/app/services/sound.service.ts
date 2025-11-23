@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 @Injectable({ providedIn: 'root' })
 export class SoundService {
   private audioCtx?: AudioContext;
+  private enabledKey = 'soundEnabled';
 
   private getCtx() {
     if (!this.audioCtx) {
@@ -45,5 +46,28 @@ export class SoundService {
     } catch (e) {
       // ignore
     }
+  }
+
+  // Resume the audio context on user gesture (required by many browsers)
+  async resume() {
+    try {
+      const ctx = this.getCtx();
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+      localStorage.setItem(this.enabledKey, '1');
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  disable() {
+    try {
+      localStorage.removeItem(this.enabledKey);
+    } catch (e) {}
+  }
+
+  isEnabled(): boolean {
+    try { return localStorage.getItem(this.enabledKey) === '1'; } catch (e) { return false; }
   }
 }

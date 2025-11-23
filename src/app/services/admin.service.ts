@@ -50,6 +50,7 @@ export interface Payment {
   paymentDate: string;
   status: 'pending' | 'completed' | 'refunded';
   paymentMethod: string;
+  studentFeeId?: string; // optional link to per-student fee assignment
 }
 
 export interface RefundRequest {
@@ -75,6 +76,15 @@ export interface Invoice {
   status: 'unpaid' | 'paid' | 'cancelled';
 }
 
+export interface StudentFee {
+  id: string;
+  userId: string;
+  feeStructureId: string; // reference to FeeStructure template
+  originalAmount: number;
+  remainingAmount: number;
+  status: 'unpaid' | 'partial' | 'paid';
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -84,6 +94,7 @@ export class AdminService {
   private feeStructuresKey = 'feeStructures';
   private paymentPoliciesKey = 'paymentPolicies';
   private paymentsKey = 'payments';
+  private studentFeesKey = 'studentFees';
   private refundRequestsKey = 'refundRequests';
   private invoicesKey = 'invoices';
 
@@ -136,6 +147,42 @@ export class AdminService {
     if (!localStorage.getItem(this.invoicesKey)) {
       localStorage.setItem(this.invoicesKey, JSON.stringify([]));
     }
+
+    // Initialize student fees assignments
+    if (!localStorage.getItem(this.studentFeesKey)) {
+      localStorage.setItem(this.studentFeesKey, JSON.stringify([]));
+    }
+  }
+
+  // Student fee assignments (per-user)
+  getStudentFees(): StudentFee[] {
+    const raw = localStorage.getItem(this.studentFeesKey);
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  getStudentFeesForUser(userId: string): StudentFee[] {
+    return this.getStudentFees().filter(sf => sf.userId === userId);
+  }
+
+  getStudentFeeById(id: string): StudentFee | undefined {
+    return this.getStudentFees().find(sf => sf.id === id);
+  }
+
+  createStudentFee(fee: Omit<StudentFee, 'id'>): StudentFee {
+    const fees = this.getStudentFees();
+    const newFee: StudentFee = { ...fee, id: `sfee-${Date.now()}-${Math.random().toString(36).slice(2,8)}` };
+    fees.push(newFee);
+    localStorage.setItem(this.studentFeesKey, JSON.stringify(fees));
+    return newFee;
+  }
+
+  updateStudentFee(id: string, updates: Partial<StudentFee>): boolean {
+    const fees = this.getStudentFees();
+    const idx = fees.findIndex(f => f.id === id);
+    if (idx === -1) return false;
+    fees[idx] = { ...fees[idx], ...updates };
+    localStorage.setItem(this.studentFeesKey, JSON.stringify(fees));
+    return true;
   }
 
   // User Management
@@ -377,7 +424,7 @@ export class AdminService {
     const users = this.getUsers().filter(u => u.role === 'student' && u.isActive);
     const payments = this.getPayments();
     const feeStructures = this.getFeeStructures();
-    
+
     return users.map(user => {
       const userPayments = payments.filter(p => p.userId === user.id && p.status === 'completed');
       const totalPaid = userPayments.reduce((sum, p) => sum + p.amount, 0);
@@ -385,7 +432,7 @@ export class AdminService {
         .filter(fs => fs.isActive)
         .reduce((sum, fs) => sum + fs.amount, 0);
       const unpaid = totalDue - totalPaid;
-      
+
       return {
         userId: user.id,
         username: user.username,
@@ -399,7 +446,7 @@ export class AdminService {
   }
 
   getPaymentHistory(): Payment[] {
-    return this.getPayments().sort((a, b) => 
+    return this.getPayments().sort((a, b) =>
       new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
     );
   }

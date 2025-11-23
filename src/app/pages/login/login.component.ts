@@ -4,6 +4,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { SoundService } from '../../services/sound.service';
+import { StorageService } from '../../services/storage.service';
 
 @Component({
   selector: 'app-login',
@@ -25,6 +26,8 @@ export class LoginComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private sound: SoundService
+    ,
+    private storage: StorageService
   ) {}
 
   ngOnInit(): void {
@@ -33,6 +36,23 @@ export class LoginComponent implements OnInit {
 
     // Don't auto-redirect if logged in - allow user to see login page
     // User can logout if they want to switch accounts
+
+    // Prefill username/password from cookies if present (remember me)
+    try {
+      const lastUser = this.storage.getCookie('lastUser');
+      const lastPass = this.storage.getCookie('lastPass');
+      if (lastUser) {
+        this.username = lastUser;
+      }
+      if (lastPass) {
+        try { this.password = lastPass ? atob(lastPass) : ''; } catch(e) { this.password = ''; }
+      }
+      if (lastUser || lastPass) {
+        this.rememberMe = true;
+      }
+    } catch (e) {
+      // ignore
+    }
   }
 
   login(event?: Event) {
@@ -69,7 +89,7 @@ export class LoginComponent implements OnInit {
           console.log('Login successful, current user:', currentUser);
           // play success tone
           try { this.sound.playSuccess(); } catch (e) { }
-          
+
           if (!currentUser) {
             this.errorMessage = 'Failed to store user session. Please try again.';
             this.isLoading = false;
@@ -79,7 +99,7 @@ export class LoginComponent implements OnInit {
           // Get the home route based on role
           const homeRoute = this.authService.getHomeRoute();
           console.log('Redirecting to:', homeRoute);
-          
+
           // Use navigate with replaceUrl to prevent back button issues
           this.router.navigate([homeRoute], { replaceUrl: true }).then(
             (navSuccess) => {

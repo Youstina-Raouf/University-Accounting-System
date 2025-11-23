@@ -1,5 +1,12 @@
 <div class="budget-container">
   <h2>Department Budgets</h2>
+  <div style="height:280px; margin-bottom:12px;">
+    <canvas baseChart
+      [data]="barChartData"
+      [options]="barChartOptions"
+      [type]="'bar'">
+    </canvas>
+  </div>
   <table class="data-table">
     <thead>
       <tr><th>Department</th><th>Allocated</th><th>Used</th><th>Remaining</th></tr>

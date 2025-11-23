@@ -5,6 +5,7 @@
       <div class="header-actions">
         <span class="welcome-text">Welcome, {{ student?.firstname || student?.username || 'Student' }}!</span>
         <a routerLink="/profile" class="btn btn-primary header-btn btn-animate"><i class="fas fa-user"></i> Profile</a>
+        <a routerLink="/chat" class="btn btn-secondary header-btn"><i class="fas fa-robot"></i> AI Chat</a>
         <button class="logout-btn header-btn" (click)="logout()">
           <i class="fas fa-sign-out-alt"></i> Logout
         </button>
@@ -22,7 +23,7 @@
           <p class="card-value">{{ formatCurrency(outstandingBalance) }}</p>
         </div>
       </div>
-      
+
       <div class="summary-card due">
         <div class="card-icon"><i class="fas fa-file-invoice-dollar"></i></div>
         <div class="card-info">
@@ -30,7 +31,7 @@
           <p class="card-value">{{ formatCurrency(totalDue) }}</p>
         </div>
       </div>
-      
+
       <div class="summary-card paid">
         <div class="card-icon"><i class="fas fa-check-circle"></i></div>
         <div class="card-info">
@@ -185,9 +186,9 @@
                 </span>
               </td>
               <td>
-                <button 
+                <button
                   *ngIf="payment.status === 'completed'"
-                  class="btn btn-refund" 
+                  class="btn btn-refund"
                   (click)="openRefundModal(payment)">
                   <i class="fas fa-undo"></i> Request Refund
                 </button>

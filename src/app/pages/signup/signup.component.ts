@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { StorageService } from '../../services/storage.service';
 
 @Component({
   selector: 'app-signup',
@@ -35,12 +36,13 @@ export class SignupComponent {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private storageService: StorageService
   ) {}
 
   registerUser() {
-    if (!this.user.firstname.trim() || !this.user.lastname.trim() || 
-        !this.user.email.trim() || !this.user.username.trim() || 
+    if (!this.user.firstname.trim() || !this.user.lastname.trim() ||
+        !this.user.email.trim() || !this.user.username.trim() ||
         !this.user.password || !this.user.role) {
       this.errorMessage = 'Please fill in all fields';
       return;
@@ -64,7 +66,7 @@ export class SignupComponent {
       try {
         const users = this.getUsers();
         const existingUser = users.find((u: any) => u.username === this.user.username);
-        
+
         if (existingUser) {
           this.errorMessage = 'Username already exists';
           this.isLoading = false;
@@ -98,7 +100,13 @@ export class SignupComponent {
         localStorage.setItem('users', JSON.stringify(users));
 
         const { password, ...userWithoutPassword } = newUser;
-        localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
+        // Store newly registered user into session so they are immediately logged in for this tab
+        try {
+          this.storageService.setSession('currentUser', userWithoutPassword);
+        } catch (e) {
+          // fallback
+          localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
+        }
 
         if (this.user.role === 'admin') {
           this.router.navigate(['/admin']);

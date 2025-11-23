@@ -10,6 +10,8 @@ export const routes: Routes = [
   // PUBLIC ROUTES (NO GUARDS)
   { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), data: { public: true } },
   { path: 'signup', loadComponent: () => import('./pages/signup/signup.component').then(m => m.SignupComponent), data: { public: true } },
+  { path: 'chat', loadComponent: () => import('./pages/chat/chat.component').then(m => m.ChatComponent), data: { public: true } },
+  { path: 'debug', loadComponent: () => import('./pages/debug/debug.component').then(m => m.DebugComponent), data: { public: true } },
 
   // PROTECTED ROUTES (lazy-loaded standalone components)
   { path: 'profile', loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent), canActivate: [AuthGuard] },

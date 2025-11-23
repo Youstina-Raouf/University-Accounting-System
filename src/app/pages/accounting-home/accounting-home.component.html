@@ -4,6 +4,7 @@
       <h1><i class="fas fa-calculator"></i> Accounting Portal</h1>
       <div class="header-actions">
         <a routerLink="/profile" class="btn btn-primary header-btn btn-animate"><i class="fas fa-user"></i> Profile</a>
+        <a routerLink="/chat" class="btn btn-secondary header-btn"><i class="fas fa-robot"></i> AI Chat</a>
         <button class="logout-btn header-btn" (click)="logout()">
           <i class="fas fa-sign-out-alt"></i> Logout
         </button>
@@ -12,26 +13,26 @@
   </div>
 
   <div class="accounting-tabs">
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'overview'"
       (click)="setActiveTab('overview')">
       <i class="fas fa-chart-line"></i> Overview
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'students'"
       (click)="setActiveTab('students')">
       <i class="fas fa-users"></i> Students
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'payments'"
       (click)="setActiveTab('payments')">
       <i class="fas fa-credit-card"></i> Payments
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'student-details'"
       (click)="setActiveTab('student-details')"
       *ngIf="selectedStudent">
@@ -43,7 +44,7 @@
     <!-- Overview Tab -->
     <div *ngIf="activeTab === 'overview'" class="tab-content">
       <h2><i class="fas fa-chart-pie"></i> Overview</h2>
-      
+
       <div class="overview-chart" style="height:260px;margin-bottom:18px;">
         <canvas baseChart
           [data]="revenueChartData"
@@ -60,7 +61,7 @@
             <p class="stat-value">{{ formatCurrency(totalRevenue) }}</p>
           </div>
         </div>
-        
+
         <div class="stat-card unpaid">
           <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
           <div class="stat-info">
@@ -68,7 +69,7 @@
             <p class="stat-value">{{ unpaidStudents.length }}</p>
           </div>
         </div>
-        
+
         <div class="stat-card students">
           <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
           <div class="stat-info">
@@ -76,7 +77,7 @@
             <p class="stat-value">{{ students.length }}</p>
           </div>
         </div>
-        
+
         <div class="stat-card payments">
           <div class="stat-icon"><i class="fas fa-receipt"></i></div>
           <div class="stat-info">
@@ -127,7 +128,7 @@
     <!-- Students Tab -->
     <div *ngIf="activeTab === 'students'" class="tab-content">
       <h2><i class="fas fa-users"></i> All Students</h2>
-      
+
       <div class="table-section">
         <div class="table-container">
           <table class="data-table">
@@ -175,7 +176,7 @@
     <!-- Payments Tab -->
     <div *ngIf="activeTab === 'payments'" class="tab-content">
       <h2><i class="fas fa-credit-card"></i> Payment History</h2>
-      
+
       <div class="table-section">
         <div class="table-container">
           <table class="data-table">
@@ -216,9 +217,9 @@
           <i class="fas fa-arrow-left"></i> Back to Students
         </button>
       </div>
-      
+
       <h2><i class="fas fa-user"></i> Student Details: {{ selectedStudent.firstname || selectedStudent.username }}</h2>
-      
+
       <div class="student-info-section">
         <div class="info-card">
           <h3>Student Information</h3>

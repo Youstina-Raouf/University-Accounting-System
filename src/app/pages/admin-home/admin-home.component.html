@@ -4,6 +4,7 @@
       <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
       <div class="header-actions">
         <a routerLink="/profile" class="btn btn-primary header-btn btn-animate"><i class="fas fa-user"></i> Profile</a>
+        <a routerLink="/chat" class="btn btn-secondary header-btn"><i class="fas fa-robot"></i> AI Chat</a>
         <button class="logout-btn header-btn" (click)="logout()">
           <i class="fas fa-sign-out-alt"></i> Logout
         </button>
@@ -12,32 +13,32 @@
   </div>
 
   <div class="admin-tabs">
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'dashboard'"
       (click)="setActiveTab('dashboard')">
       <i class="fas fa-chart-line"></i> Dashboard
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'users'"
       (click)="setActiveTab('users')">
       <i class="fas fa-users"></i> User Management
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'fees'"
       (click)="setActiveTab('fees')">
       <i class="fas fa-dollar-sign"></i> Tuition & Fees
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'policies'"
       (click)="setActiveTab('policies')">
       <i class="fas fa-cog"></i> Payment Policies
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'refunds'"
       (click)="setActiveTab('refunds')">
       <i class="fas fa-undo"></i> Refunds
@@ -48,7 +49,7 @@
     <!-- Dashboard Tab -->
     <div *ngIf="activeTab === 'dashboard'" class="tab-content">
       <h2><i class="fas fa-chart-pie"></i> Reporting Dashboard</h2>
-      
+
       <div class="stats-grid">
         <div class="stat-card revenue">
           <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
@@ -57,7 +58,7 @@
             <p class="stat-value">{{ formatCurrency(totalRevenue) }}</p>
           </div>
         </div>
-        
+
         <div class="stat-card unpaid">
           <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
           <div class="stat-info">
@@ -65,7 +66,7 @@
             <p class="stat-value">{{ unpaidStudents.length }}</p>
           </div>
         </div>
-        
+
         <div class="stat-card users">
           <div class="stat-icon"><i class="fas fa-users"></i></div>
           <div class="stat-info">
@@ -73,7 +74,7 @@
             <p class="stat-value">{{ users.length }}</p>
           </div>
         </div>
-        
+
         <div class="stat-card payments">
           <div class="stat-icon"><i class="fas fa-credit-card"></i></div>
           <div class="stat-info">
@@ -149,7 +150,7 @@
     <!-- User Management Tab -->
     <div *ngIf="activeTab === 'users'" class="tab-content">
       <h2><i class="fas fa-users-cog"></i> User Management</h2>
-      
+
       <div class="form-section">
         <h3>Create New User</h3>
         <div class="form-grid">
@@ -263,7 +264,7 @@
     <!-- Tuition & Fees Tab -->
     <div *ngIf="activeTab === 'fees'" class="tab-content">
       <h2><i class="fas fa-dollar-sign"></i> Tuition & Fee Management</h2>
-      
+
       <!-- Fee Categories -->
       <div class="form-section">
         <h3>Fee Categories</h3>
@@ -436,7 +437,7 @@
     <!-- Payment Policies Tab -->
     <div *ngIf="activeTab === 'policies'" class="tab-content">
       <h2><i class="fas fa-cog"></i> Payment & Policy Control</h2>
-      
+
       <div class="form-section">
         <h3>Create Payment Policy</h3>
         <div class="form-grid">
@@ -539,7 +540,7 @@
     <!-- Refunds Tab -->
     <div *ngIf="activeTab === 'refunds'" class="tab-content">
       <h2><i class="fas fa-undo"></i> Refund Management</h2>
-      
+
       <div class="table-section">
         <h3>Refund Requests</h3>
         <div class="table-container">
@@ -561,7 +562,7 @@
                 <td>{{ request.reason }}</td>
                 <td>{{ formatDate(request.requestedDate) }}</td>
                 <td>
-                  <span class="status-badge" 
+                  <span class="status-badge"
                         [class.pending]="request.status === 'pending'"
                         [class.approved]="request.status === 'approved'"
                         [class.rejected]="request.status === 'rejected'">
@@ -569,15 +570,15 @@
                   </span>
                 </td>
                 <td>
-                  <button 
+                  <button
                     *ngIf="request.status === 'pending'"
-                    class="btn btn-sm btn-approve" 
+                    class="btn btn-sm btn-approve"
                     (click)="approveRefund(request.id)">
                     <i class="fas fa-check"></i> Approve
                   </button>
-                  <button 
+                  <button
                     *ngIf="request.status === 'pending'"
-                    class="btn btn-sm btn-reject" 
+                    class="btn btn-sm btn-reject"
                     (click)="rejectRefund(request.id)">
                     <i class="fas fa-times"></i> Reject
                   </button>

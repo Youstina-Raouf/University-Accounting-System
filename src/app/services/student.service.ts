@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AuthService } from './auth.service';
-import { AdminService, FeeStructure, Payment } from './admin.service';
+import { AdminService, FeeStructure, Payment, StudentFee } from './admin.service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +20,40 @@ export class StudentService {
   }
 
   getStudentFees(): FeeStructure[] {
-    return this.adminService.getFeeStructures().filter(fs => fs.isActive);
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) return [];
+
+    // Get per-student fee assignments; if none exist, auto-assign active fee structures as student-specific fees
+    let sFees = this.adminService.getStudentFeesForUser(currentUser.username);
+    if (!sFees || sFees.length === 0) {
+      const templates = this.adminService.getFeeStructures().filter(fs => fs.isActive);
+      templates.forEach(t => {
+        try {
+          this.adminService.createStudentFee({
+            userId: currentUser.username,
+            feeStructureId: t.id,
+            originalAmount: t.amount,
+            remainingAmount: t.amount,
+            status: 'unpaid'
+          });
+        } catch (e) {}
+      });
+      sFees = this.adminService.getStudentFeesForUser(currentUser.username);
+    }
+
+    // Map StudentFee to a FeeStructure-like object for UI consumption
+    return sFees.map((sf: StudentFee) => {
+      const tmpl = this.adminService.getFeeStructures().find(f => f.id === sf.feeStructureId);
+      return {
+        id: sf.id,
+        categoryId: tmpl?.categoryId || '',
+        categoryName: tmpl?.categoryName || 'Fee',
+        academicYear: tmpl?.academicYear || '',
+        amount: sf.remainingAmount,
+        dueDate: tmpl?.dueDate || new Date().toISOString(),
+        isActive: sf.remainingAmount > 0
+      } as FeeStructure;
+    });
   }
 
   getStudentPayments(): Payment[] {
@@ -39,20 +72,16 @@ export class StudentService {
   }
 
   getOutstandingBalance(): number {
-    const fees = this.getStudentFees();
+    const fees = this.adminService.getStudentFeesForUser(this.authService.getCurrentUser()?.username || '');
+    const totalDue = fees.reduce((sum, f) => sum + (f.remainingAmount || 0), 0);
     const payments = this.getStudentPayments();
-    
-    const totalDue = fees.reduce((sum, fee) => sum + fee.amount, 0);
-    const totalPaid = payments
-      .filter(p => p.status === 'completed')
-      .reduce((sum, p) => sum + p.amount, 0);
-    
+    const totalPaid = payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + p.amount, 0);
     return Math.max(0, totalDue - totalPaid);
   }
 
   getTotalDue(): number {
-    const fees = this.getStudentFees();
-    return fees.reduce((sum, fee) => sum + fee.amount, 0);
+    const fees = this.adminService.getStudentFeesForUser(this.authService.getCurrentUser()?.username || '');
+    return fees.reduce((sum, f) => sum + (f.remainingAmount || 0), 0);
   }
 
   getTotalPaid(): number {
@@ -66,18 +95,34 @@ export class StudentService {
     try {
       const currentUser = this.authService.getCurrentUser();
       if (!currentUser) return false;
+      // Here feeStructureId is actually the studentFee id (per-student assignment)
+      const studentFee = this.adminService.getStudentFeeById(feeStructureId);
+      if (!studentFee) {
+        console.error('Student fee not found for id', feeStructureId);
+        return false;
+      }
 
       const payment: Omit<Payment, 'id'> = {
         userId: currentUser.username,
         username: currentUser.username,
-        feeStructureId: feeStructureId,
+        feeStructureId: studentFee.feeStructureId,
         amount: amount,
         paymentDate: new Date().toISOString(),
         status: 'completed',
-        paymentMethod: paymentMethod
+        paymentMethod: paymentMethod,
+        studentFeeId: studentFee.id
       };
 
       this.adminService.createPayment(payment);
+
+      // Update studentFee remaining amount / status
+      try {
+        const remaining = Math.max(0, +(studentFee.remainingAmount - amount));
+        const status: StudentFee['status'] = remaining === 0 ? 'paid' : (remaining < studentFee.originalAmount ? 'partial' : 'unpaid');
+        this.adminService.updateStudentFee(studentFee.id, { remainingAmount: remaining, status });
+      } catch (e) {
+        console.error('Failed to update student fee after payment', e);
+      }
       return true;
     } catch (error) {
       console.error('Payment error:', error);
