@@ -1,11 +1,2 @@
-<nav class="navbar">
-	<a routerLink="/">Home</a> |
-	<a routerLink="/chat">AI Chat</a> |
-	<a routerLink="/debug">Debug</a>
-
-	<span style="margin-left:1rem; font-weight:600;">{{ auth.currentUser?.name || auth.currentUser || 'Guest' }}</span>
-
-	<span *ngIf="lastUserCookie" style="margin-left:1rem; color:#666">Last user cookie: {{ lastUserCookie }}</span>
-
-	<button style="margin-left:1rem" (click)="logout()">Logout</button>
-</nav>
+<!-- navbar.html is unused — NavbarComponent uses an inline template in navbar.component.ts -->
+<!-- File kept for reference, remove if you want to fully delete it. -->

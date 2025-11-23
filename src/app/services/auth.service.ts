@@ -47,7 +47,8 @@ export class AuthService {
         // Store user without password in currentUser
         const userToStore: User = {
           username: user.username,
-          role: user.role
+          // normalize role to lowercase to avoid case-mismatch when checking route roles
+          role: (user.role || '').toString().toLowerCase() as any
         };
 
         // Add optional fields if they exist
@@ -76,8 +77,18 @@ export class AuthService {
             // Store username and (obfuscated) password in cookies for demo "remember me" behavior.
             // NOTE: Storing plaintext passwords in client cookies is insecure. We base64-encode the password here
             // only to avoid storing raw characters; this is NOT secure and should not be used in production.
-            this.storageService.setCookie('lastUser', userToStore.username, 30);
-            try { this.storageService.setCookie('lastPass', btoa(password), 30); } catch(e) { /* ignore */ }
+            const ok1 = this.storageService.setCookie('lastUser', userToStore.username, 30);
+            let ok2 = true;
+            try { ok2 = this.storageService.setCookie('lastPass', btoa(password), 30); } catch(e) { ok2 = false; }
+
+            // If cookies could not be set (some dev environments block them), keep a reliable fallback
+            // in localStorage so the UI can still show a "remembered" username.
+            if (!ok1) {
+              try { localStorage.setItem('lastUser', userToStore.username); } catch (e) {}
+            }
+            if (!ok2) {
+              try { localStorage.setItem('lastPass', btoa(password)); } catch (e) {}
+            }
           } catch(e){}
           localStorage.setItem(this.currentUserKey, JSON.stringify(userToStore));
         }
@@ -140,7 +151,7 @@ export class AuthService {
 
   getUserRole(): UserRole | null {
     const user = this.getCurrentUser();
-    return user ? user.role : null;
+    return user ? (user.role ? (user.role as string).toString().toLowerCase() as UserRole : null) : null;
   }
 
   private getUsers(): any[] {

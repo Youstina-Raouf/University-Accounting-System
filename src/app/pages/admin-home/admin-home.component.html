@@ -3,8 +3,12 @@
     <div class="header-content">
       <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
       <div class="header-actions">
-        <a routerLink="/profile" class="btn btn-primary header-btn btn-animate"><i class="fas fa-user"></i> Profile</a>
-        <a routerLink="/chat" class="btn btn-secondary header-btn"><i class="fas fa-robot"></i> AI Chat</a>
+  <!-- Reuse logout-btn styling so header buttons are consistent and not underlined -->
+  <button routerLink="/profile" class="logout-btn header-btn btn-animate"><i class="fas fa-user"></i> Profile</button>
+  <button routerLink="/chat" class="logout-btn header-btn"><i class="fas fa-robot"></i> AI Chat</button>
+  <!-- Admin quick links: only visible to admin users -->
+  <button routerLink="/department-budget" *ngIf="authService.getUserRole() === 'admin'" class="logout-btn header-btn"><i class="fas fa-landmark"></i> Dept Budget</button>
+  <button routerLink="/staff-payroll" *ngIf="authService.getUserRole() === 'admin'" class="logout-btn header-btn"><i class="fas fa-users-cog"></i> Staff Payroll</button>
         <button class="logout-btn header-btn" (click)="logout()">
           <i class="fas fa-sign-out-alt"></i> Logout
         </button>
@@ -199,6 +203,8 @@
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
+                <th>Wallet Balance</th>
+                <th>Outstanding Fees</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -236,17 +242,37 @@
                   <input type="checkbox" [(ngModel)]="editingUser.isActive" class="inline-checkbox">
                 </td>
                 <td *ngIf="editingUser?.id !== user.id">
+                  <span *ngIf="user.role === 'student'" class="balance-amount">
+                    {{ formatCurrency(getStudentWalletBalance(user)) }}
+                  </span>
+                  <span *ngIf="user.role !== 'student'">-</span>
+                </td>
+                <td *ngIf="editingUser?.id === user.id && editingUser">-</td>
+                <td *ngIf="editingUser?.id !== user.id">
+                  <span *ngIf="user.role === 'student'" class="unpaid-amount">
+                    {{ formatCurrency(getStudentOutstandingFees(user)) }}
+                  </span>
+                  <span *ngIf="user.role !== 'student'">-</span>
+                </td>
+                <td *ngIf="editingUser?.id === user.id && editingUser">-</td>
+                <td *ngIf="editingUser?.id !== user.id">
                   <button class="btn btn-sm btn-edit" (click)="editUser(user)">
                     <i class="fas fa-edit"></i> Edit
                   </button>
                   <button class="btn btn-sm btn-toggle" (click)="toggleUserStatus(user)">
                     <i class="fas" [class.fa-toggle-on]="user.isActive" [class.fa-toggle-off]="!user.isActive"></i>
                   </button>
+                  <button *ngIf="user.role === 'student'" class="btn btn-sm btn-success" (click)="openWalletModal(user)" title="Top Up Wallet">
+                    <i class="fas fa-wallet"></i> Top Up
+                  </button>
+                  <button *ngIf="user.role === 'student'" class="btn btn-sm btn-primary" (click)="openFeeModal(user)" title="Add Fee">
+                    <i class="fas fa-dollar-sign"></i> Add Fee
+                  </button>
                   <button class="btn btn-sm btn-delete" (click)="deleteUser(user.id)">
                     <i class="fas fa-trash"></i> Delete
                   </button>
                 </td>
-                <td *ngIf="editingUser?.id === user.id" colspan="3">
+                <td *ngIf="editingUser?.id === user.id" colspan="5">
                   <button class="btn btn-sm btn-save" (click)="updateUser()">
                     <i class="fas fa-check"></i> Save
                   </button>
@@ -592,6 +618,113 @@
           </table>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Student Fee Modal -->
+<div class="modal-overlay" *ngIf="showFeeModal" (click)="closeFeeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-dollar-sign"></i> Add Outstanding Balance</h3>
+      <button class="modal-close" (click)="closeFeeModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" *ngIf="selectedStudentForFee">
+      <div class="form-group">
+        <label>Student:</label>
+        <p class="form-value">{{ selectedStudentForFee.firstname }} {{ selectedStudentForFee.lastname }} ({{ selectedStudentForFee.username }})</p>
+      </div>
+      <div class="form-group">
+        <label>Current Outstanding Fees:</label>
+        <p class="form-value unpaid-amount">{{ formatCurrency(getStudentOutstandingFees(selectedStudentForFee)) }}</p>
+      </div>
+      <div class="form-group">
+        <label>Fee Structure *</label>
+        <select [(ngModel)]="newStudentFee.feeStructureId" class="form-input" (change)="newStudentFee.amount = 0">
+          <option value="">Select Fee Structure (or enter custom amount below)</option>
+          <option *ngFor="let fs of feeStructures" [value]="fs.id">
+            {{ fs.categoryName }} - {{ fs.academicYear }} ({{ formatCurrency(fs.amount) }})
+          </option>
+        </select>
+        <small>Select a fee structure to use its amount, or leave empty and enter a custom amount</small>
+      </div>
+      <div class="form-group">
+        <label>Custom Amount (if no fee structure selected) *</label>
+        <input
+          type="number"
+          [(ngModel)]="newStudentFee.amount"
+          step="0.01"
+          min="0"
+          class="form-input"
+          [disabled]="!!newStudentFee.feeStructureId"
+          placeholder="Enter amount">
+        <small *ngIf="newStudentFee.feeStructureId">Amount will be taken from selected fee structure</small>
+      </div>
+      <div class="form-group">
+        <label>Description (Optional)</label>
+        <input
+          type="text"
+          [(ngModel)]="newStudentFee.description"
+          class="form-input"
+          placeholder="Optional description for this fee">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="closeFeeModal()">Cancel</button>
+      <button
+        class="btn btn-primary"
+        (click)="addStudentFee()"
+        [disabled]="!newStudentFee.feeStructureId && newStudentFee.amount <= 0">
+        <i class="fas fa-plus"></i> Add Fee
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Top Up Wallet Modal -->
+<div class="modal-overlay" *ngIf="showWalletModal" (click)="closeWalletModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-wallet"></i> Top Up Wallet Balance</h3>
+      <button class="modal-close" (click)="closeWalletModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" *ngIf="selectedStudentForWallet">
+      <div class="form-group">
+        <label>Student:</label>
+        <p class="form-value">{{ selectedStudentForWallet.firstname }} {{ selectedStudentForWallet.lastname }} ({{ selectedStudentForWallet.username }})</p>
+      </div>
+      <div class="form-group">
+        <label>Current Wallet Balance:</label>
+        <p class="form-value balance-amount">{{ formatCurrency(getStudentWalletBalance(selectedStudentForWallet)) }}</p>
+      </div>
+      <div class="form-group">
+        <label>Amount to Add *</label>
+        <input
+          type="number"
+          [(ngModel)]="walletTopUpAmount"
+          step="0.01"
+          min="0.01"
+          class="form-input"
+          placeholder="Enter amount to add">
+        <small>Enter the amount you want to add to the student's wallet balance</small>
+      </div>
+      <div class="form-group" *ngIf="walletTopUpAmount > 0">
+        <label>New Wallet Balance:</label>
+        <p class="form-value balance-amount">{{ formatCurrency(getStudentWalletBalance(selectedStudentForWallet) + walletTopUpAmount) }}</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="closeWalletModal()">Cancel</button>
+      <button
+        class="btn btn-success"
+        (click)="topUpWallet()"
+        [disabled]="walletTopUpAmount <= 0">
+        <i class="fas fa-plus"></i> Top Up Wallet
+      </button>
     </div>
   </div>
 </div>

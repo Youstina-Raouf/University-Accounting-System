@@ -75,4 +75,33 @@ describe('StudentService payments (full & partial)', () => {
     expect(sfee2.remainingAmount).toBe(0);
     expect(sfee2.status).toBe('paid');
   });
+
+  it('should block wallet payments when insufficient and allow when sufficient', () => {
+    // Give the student a small wallet balance
+    const username = 'stu1';
+    const initialBalance = 50;
+    const okSet = admin.setUserWallet(username, initialBalance);
+    expect(okSet).toBeTrue();
+
+    const fees = studentSvc.getStudentFees();
+    const first = fees[0];
+    const amount = (first.amount as number);
+
+    // Attempt to pay full amount with insufficient wallet funds
+    const paid = studentSvc.makePayment(amount, first.id, 'Wallet');
+    expect(paid).toBeFalse();
+
+    // Top up wallet
+    const okTop = admin.adjustUserWallet(username, 1000);
+    expect(okTop).toBeTrue();
+
+    // Now payment should succeed
+    const paid2 = studentSvc.makePayment(amount, first.id, 'Wallet');
+    expect(paid2).toBeTrue();
+
+    const sfee = admin.getStudentFeeById(first.id as string);
+    expect(sfee).toBeDefined();
+    expect(sfee!.remainingAmount).toBe(0);
+    expect(sfee!.status).toBe('paid');
+  });
 });

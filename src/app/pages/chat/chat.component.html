@@ -1,9 +1,16 @@
 <div class="chat-wrap">
   <div class="chat-header">
-    <div class="persona-avatar">🤖</div>
-    <div>
-      <div class="persona-title">Campus Buddy</div>
-      <div class="persona-sub">Helpful. Chill. Slightly nerdy.</div>
+    <div class="header-left">
+      <div class="persona-avatar">🤖</div>
+      <div>
+        <div class="persona-title">Campus Buddy</div>
+        <div class="persona-sub">Helpful. Chill. Slightly nerdy.</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button routerLink="{{ authService.getHomeRoute() }}" class="back-home-btn">
+        <i class="fas fa-home"></i> Back to Home
+      </button>
     </div>
   </div>
 

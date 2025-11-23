@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { StorageService } from '../../services/storage.service';
 
 @Component({
   selector: 'app-profile',
@@ -22,12 +23,20 @@ export class ProfileComponent {
   avatarPreview: string | null = null;
   avatarUpdated = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private storage: StorageService) {}
 
   ngOnInit() {
-    const cu = localStorage.getItem('currentUser');
-    if (cu) {
-      this.user = JSON.parse(cu);
+    // Prefer session storage (active session) then fall back to local storage
+    const sessionUser = this.storage.getSession('currentUser');
+    if (sessionUser) {
+      this.user = sessionUser;
+      this.avatarPreview = this.user.avatar || null;
+      return;
+    }
+
+    const localUser = this.storage.getLocal('currentUser');
+    if (localUser) {
+      this.user = localUser;
       this.avatarPreview = this.user.avatar || null;
     }
   }
@@ -51,8 +60,14 @@ export class ProfileComponent {
   }
 
   saveProfile() {
-    // Update local currentUser and users list
-    localStorage.setItem('currentUser', JSON.stringify(this.user));
+    // Update session and local currentUser and users list so changes (avatar etc.) are visible immediately
+    try {
+      this.storage.setSession('currentUser', this.user);
+    } catch (e) {
+      // fallback
+      localStorage.setItem('currentUser', JSON.stringify(this.user));
+    }
+
     const usersRaw = localStorage.getItem('users');
     const users = usersRaw ? JSON.parse(usersRaw) : [];
     const idx = users.findIndex((u: any) => u.username === this.user.username);
@@ -61,7 +76,11 @@ export class ProfileComponent {
     } else {
       users.push(this.user);
     }
-    localStorage.setItem('users', JSON.stringify(users));
+    try {
+      this.storage.setLocal('users', users);
+    } catch (e) {
+      localStorage.setItem('users', JSON.stringify(users));
+    }
     this.editMode = false;
   }
   changePassword() {
@@ -69,13 +88,21 @@ export class ProfileComponent {
     if (!newPass) return;
     // In this mock app we just store the plaintext password locally for demo purposes
     this.user.password = newPass;
-    localStorage.setItem('currentUser', JSON.stringify(this.user));
+    try {
+      this.storage.setSession('currentUser', this.user);
+    } catch (e) {
+      localStorage.setItem('currentUser', JSON.stringify(this.user));
+    }
     const usersRaw = localStorage.getItem('users');
     const users = usersRaw ? JSON.parse(usersRaw) : [];
     const idx = users.findIndex((u: any) => u.username === this.user.username);
     if (idx >= 0) {
       users[idx].password = newPass;
-      localStorage.setItem('users', JSON.stringify(users));
+      try {
+        this.storage.setLocal('users', users);
+      } catch (e) {
+        localStorage.setItem('users', JSON.stringify(users));
+      }
     }
     alert('Password changed (mock).');
   }

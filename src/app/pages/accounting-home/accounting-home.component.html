@@ -3,8 +3,11 @@
     <div class="header-content">
       <h1><i class="fas fa-calculator"></i> Accounting Portal</h1>
       <div class="header-actions">
-        <a routerLink="/profile" class="btn btn-primary header-btn btn-animate"><i class="fas fa-user"></i> Profile</a>
-        <a routerLink="/chat" class="btn btn-secondary header-btn"><i class="fas fa-robot"></i> AI Chat</a>
+  <!-- Reuse logout-btn styling so header buttons are consistent and not underlined -->
+  <button routerLink="/profile" class="logout-btn header-btn btn-animate"><i class="fas fa-user"></i> Profile</button>
+  <button routerLink="/chat" class="logout-btn header-btn"><i class="fas fa-robot"></i> AI Chat</button>
+      <!-- Department Budget is an accounting-only tool; show button when user is accounting -->
+      <button routerLink="/department-budget" *ngIf="authService.getUserRole() === 'accounting'" class="logout-btn header-btn"><i class="fas fa-landmark"></i> Dept Budget</button>
         <button class="logout-btn header-btn" (click)="logout()">
           <i class="fas fa-sign-out-alt"></i> Logout
         </button>

@@ -4,8 +4,11 @@
       <h1><i class="fas fa-user-graduate"></i> Student Portal</h1>
       <div class="header-actions">
         <span class="welcome-text">Welcome, {{ student?.firstname || student?.username || 'Student' }}!</span>
-        <a routerLink="/profile" class="btn btn-primary header-btn btn-animate"><i class="fas fa-user"></i> Profile</a>
-        <a routerLink="/chat" class="btn btn-secondary header-btn"><i class="fas fa-robot"></i> AI Chat</a>
+     <!-- Use the same button styling as the logout button so links look consistent
+       and don't show an underline in most browsers. routerLink works on
+       button elements as well, so convert anchors to buttons. -->
+     <button routerLink="/profile" class="logout-btn header-btn btn-animate"><i class="fas fa-user"></i> Profile</button>
+     <button routerLink="/chat" class="logout-btn header-btn"><i class="fas fa-robot"></i> AI Chat</button>
         <button class="logout-btn header-btn" (click)="logout()">
           <i class="fas fa-sign-out-alt"></i> Logout
         </button>
@@ -234,10 +237,11 @@
       <div class="form-group">
         <label>Payment Method *</label>
         <select [(ngModel)]="paymentMethod" class="form-input">
-          <option value="Online">Online Payment</option>
+            <option value="Online">Online Payment</option>
           <option value="Credit Card">Credit Card</option>
           <option value="Bank Transfer">Bank Transfer</option>
           <option value="Cash">Cash</option>
+            <option value="Wallet">Use Wallet / Outstanding Balance</option>
         </select>
       </div>
     </div>

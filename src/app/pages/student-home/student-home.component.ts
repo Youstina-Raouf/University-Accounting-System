@@ -145,8 +145,18 @@ export class StudentHomeComponent implements OnInit {
       return;
     }
 
+    // If paying from wallet, verify sufficient funds before attempting payment
+    if (this.paymentMethod === 'Wallet') {
+      const balance = this.studentService.getWalletBalance();
+      if (balance < this.paymentAmount) {
+        this.sound.playError();
+        alert(`Insufficient wallet balance. Your wallet balance is ${this.formatCurrency(balance)}. Please top up or choose another payment method.`);
+        return;
+      }
+    }
+
     this.paymentProcessing = true;
-    
+
     setTimeout(() => {
       const success = this.studentService.makePayment(
         this.paymentAmount,

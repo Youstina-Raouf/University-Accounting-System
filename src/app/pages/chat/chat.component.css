@@ -1,3 +1,5 @@
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
+
 :root {
   --bg: #fff6f6; /* soft warm background */
   --panel: #fff1f2; /* light rosy panel */
@@ -21,8 +23,22 @@
 .chat-header {
   display:flex;
   align-items:center;
+  justify-content:space-between;
   gap:14px;
   margin-bottom:14px;
+  flex-wrap: wrap;
+}
+
+.header-left {
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.header-actions {
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
 .persona-avatar {
@@ -162,6 +178,28 @@
 
 .note { margin-top:12px; color:var(--muted); font-size:13px }
 
+.back-home-btn {
+  padding:10px 16px;
+  border-radius:12px;
+  border:1px solid rgba(196,40,40,0.12);
+  background:transparent;
+  color:var(--accent);
+  cursor:pointer;
+  font-weight:600;
+  font-size:14px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition:all 0.2s;
+  text-decoration:none;
+}
+
+.back-home-btn:hover {
+  background:rgba(196,40,40,0.08);
+  transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(227,59,59,0.1);
+}
+
 /* small screens */
 @media (max-width:520px) {
   .chat-wrap { padding:10px }
@@ -169,6 +207,9 @@
   .persona-avatar { width:70px; height:70px; font-size:34px }
   .avatar { width:38px; height:38px; font-size:16px }
   .composer input { font-size:14px }
+  .chat-header { flex-direction:column; align-items:flex-start; }
+  .header-actions { width:100%; }
+  .back-home-btn { width:100%; justify-content:center; }
 }
 
 /* animations */

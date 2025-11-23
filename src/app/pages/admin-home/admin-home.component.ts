@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService, User, FeeCategory, FeeStructure, PaymentPolicy, RefundRequest } from '../../services/admin.service';
@@ -14,7 +14,7 @@ import { Router, RouterModule } from '@angular/router';
 })
 export class AdminHomeComponent implements OnInit {
   activeTab: string = 'dashboard';
-  
+
   // User Management
   users: User[] = [];
   editingUser: User | null = null;
@@ -68,10 +68,25 @@ export class AdminHomeComponent implements OnInit {
   unpaidStudents: any[] = [];
   paymentHistory: any[] = [];
 
+  // Student Fee Management
+  showFeeModal = false;
+  selectedStudentForFee: User | null = null;
+  newStudentFee = {
+    feeStructureId: '',
+    amount: 0,
+    description: ''
+  };
+
+  // Wallet Management
+  showWalletModal = false;
+  selectedStudentForWallet: User | null = null;
+  walletTopUpAmount: number = 0;
+
   constructor(
     private adminService: AdminService,
-    private authService: AuthService,
-    private router: Router
+    public authService: AuthService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -79,14 +94,17 @@ export class AdminHomeComponent implements OnInit {
   }
 
   loadAllData() {
-    this.users = this.adminService.getUsers();
-    this.feeCategories = this.adminService.getFeeCategories();
-    this.feeStructures = this.adminService.getFeeStructures();
-    this.paymentPolicies = this.adminService.getPaymentPolicies();
-    this.refundRequests = this.adminService.getRefundRequests();
+    // Create new array references to force Angular change detection
+    this.users = [...this.adminService.getUsers()];
+    this.feeCategories = [...this.adminService.getFeeCategories()];
+    this.feeStructures = [...this.adminService.getFeeStructures()];
+    this.paymentPolicies = [...this.adminService.getPaymentPolicies()];
+    this.refundRequests = [...this.adminService.getRefundRequests()];
     this.totalRevenue = this.adminService.getTotalRevenue();
-    this.unpaidStudents = this.adminService.getUnpaidStudents();
-    this.paymentHistory = this.adminService.getPaymentHistory();
+    this.unpaidStudents = [...this.adminService.getUnpaidStudents()];
+    this.paymentHistory = [...this.adminService.getPaymentHistory()];
+    // Force change detection to update the view
+    this.cdr.detectChanges();
   }
 
   // Tab Navigation
@@ -280,5 +298,161 @@ export class AdminHomeComponent implements OnInit {
 
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  }
+
+  // Student Fee Management Methods
+  openFeeModal(user: User) {
+    if (user.role !== 'student') {
+      alert('Fees can only be added to students');
+      return;
+    }
+    this.selectedStudentForFee = user;
+    this.newStudentFee = {
+      feeStructureId: '',
+      amount: 0,
+      description: ''
+    };
+    this.showFeeModal = true;
+  }
+
+  closeFeeModal() {
+    this.showFeeModal = false;
+    this.selectedStudentForFee = null;
+    this.newStudentFee = {
+      feeStructureId: '',
+      amount: 0,
+      description: ''
+    };
+  }
+
+  addStudentFee() {
+    if (!this.selectedStudentForFee) return;
+
+    // Validate inputs
+    if (!this.newStudentFee.feeStructureId && this.newStudentFee.amount <= 0) {
+      alert('Please select a fee structure or enter a custom amount');
+      return;
+    }
+
+    let feeStructure: FeeStructure | undefined;
+    let amount = 0;
+    let useCustomAmount = false;
+
+    if (this.newStudentFee.feeStructureId) {
+      // Use existing fee structure - use its amount
+      feeStructure = this.feeStructures.find(fs => fs.id === this.newStudentFee.feeStructureId);
+      if (!feeStructure) {
+        alert('Selected fee structure not found');
+        return;
+      }
+      amount = feeStructure.amount;
+    } else {
+      // Custom amount - need to create or use a fee structure
+      amount = this.newStudentFee.amount;
+      useCustomAmount = true;
+
+      // For custom amounts, create a unique fee structure to avoid conflicts
+      const defaultCategory = this.feeCategories.length > 0
+        ? this.feeCategories[0]
+        : this.adminService.createFeeCategory({
+            name: 'Custom Fee',
+            description: 'Custom fee added by admin',
+            amount: amount,
+            isActive: true
+          });
+
+      // Create a unique fee structure for this custom amount
+      feeStructure = this.adminService.createFeeStructure({
+        categoryId: defaultCategory.id,
+        academicYear: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
+        amount: amount,
+        dueDate: new Date().toISOString(),
+        isActive: true
+      });
+    }
+
+    // Check if student already has this fee structure assigned
+    const existingFees = this.adminService.getStudentFeesForUser(this.selectedStudentForFee.username);
+    const existingFee = existingFees.find(sf => sf.feeStructureId === feeStructure!.id);
+
+    if (existingFee && !useCustomAmount) {
+      // Update existing fee by adding to remaining amount (only if using fee structure's amount and it already exists)
+      const newRemaining = existingFee.remainingAmount + amount;
+      const newOriginal = existingFee.originalAmount + amount;
+      const status: 'unpaid' | 'partial' | 'paid' = newRemaining === 0 ? 'paid' : (newRemaining < newOriginal ? 'partial' : 'unpaid');
+      this.adminService.updateStudentFee(existingFee.id, {
+        originalAmount: newOriginal,
+        remainingAmount: newRemaining,
+        status
+      });
+      // Refresh data before calculating new total
+      this.loadAllData();
+      const newTotal = this.getStudentOutstandingFees(this.selectedStudentForFee);
+      alert(`Added ${this.formatCurrency(amount)} to student's outstanding fees.\nNew total: ${this.formatCurrency(newTotal)}`);
+    } else {
+      // Create new student fee assignment (for custom amounts or new fee structures)
+      this.adminService.createStudentFee({
+        userId: this.selectedStudentForFee.username,
+        feeStructureId: feeStructure!.id,
+        originalAmount: amount,
+        remainingAmount: amount,
+        status: 'unpaid'
+      });
+      // Refresh data before calculating new total
+      this.loadAllData();
+      const newTotal = this.getStudentOutstandingFees(this.selectedStudentForFee);
+      alert(`Added ${this.formatCurrency(amount)} fee to student.\nNew outstanding fees: ${this.formatCurrency(newTotal)}`);
+    }
+
+    this.closeFeeModal();
+  }
+
+  getStudentOutstandingFees(user: User): number {
+    if (user.role !== 'student') return 0;
+    // Always get fresh data from the service
+    const studentFees = this.adminService.getStudentFeesForUser(user.username);
+    const total = studentFees.reduce((sum, sf) => sum + (sf.remainingAmount || 0), 0);
+    return total;
+  }
+
+  getStudentWalletBalance(user: User): number {
+    if (user.role !== 'student') return 0;
+    return this.adminService.getUserWallet(user.username);
+  }
+
+  // Wallet Management Methods
+  openWalletModal(user: User) {
+    if (user.role !== 'student') {
+      alert('Wallet can only be managed for students');
+      return;
+    }
+    this.selectedStudentForWallet = user;
+    this.walletTopUpAmount = 0;
+    this.showWalletModal = true;
+  }
+
+  closeWalletModal() {
+    this.showWalletModal = false;
+    this.selectedStudentForWallet = null;
+    this.walletTopUpAmount = 0;
+  }
+
+  topUpWallet() {
+    if (!this.selectedStudentForWallet || this.walletTopUpAmount <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
+    const currentBalance = this.adminService.getUserWallet(this.selectedStudentForWallet.username);
+    const success = this.adminService.adjustUserWallet(this.selectedStudentForWallet.username, this.walletTopUpAmount);
+
+    if (success) {
+      const newBalance = this.adminService.getUserWallet(this.selectedStudentForWallet.username);
+      alert(`Added ${this.formatCurrency(this.walletTopUpAmount)} to wallet.\nNew wallet balance: ${this.formatCurrency(newBalance)}`);
+      this.closeWalletModal();
+      this.loadAllData();
+    } else {
+      alert('Failed to top up wallet. Please try again.');
+    }
   }
 }

@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
     const isPublicRoute = route.data['public'] === true;
     const requiredRoles = route.data['roles'] as UserRole[];
     const isLoggedIn = this.authService.isLoggedIn();
-    const currentUserRole = this.authService.getUserRole();
+  const currentUserRole = (this.authService.getUserRole() || '')?.toString().toLowerCase();
 
     // Allow access to public routes (login/signup) - don't redirect logged-in users
     // This allows users to logout and login as different users
@@ -29,14 +29,15 @@ export class AuthGuard implements CanActivate {
 
     // If user is not logged in and tries to access protected route, redirect to login
     if (!isLoggedIn) {
-      return this.router.createUrlTree(['/login'], { 
-        queryParams: { returnUrl: state.url } 
+      return this.router.createUrlTree(['/login'], {
+        queryParams: { returnUrl: state.url }
       });
     }
 
     // Check if route requires specific roles
     if (requiredRoles && requiredRoles.length > 0) {
-      const hasRequiredRole = requiredRoles.some(role => role === currentUserRole);
+      const req = requiredRoles.map(r => (r || '').toString().toLowerCase());
+      const hasRequiredRole = req.some(role => role === currentUserRole);
       if (!hasRequiredRole) {
         // If user doesn't have required role, redirect to their home
         return this.router.createUrlTree([this.authService.getHomeRoute()]);

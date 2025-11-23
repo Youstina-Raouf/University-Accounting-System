@@ -12,6 +12,7 @@ export interface User {
   email: string;
   isActive: boolean;
   createdAt: string;
+  walletBalance?: number;
 }
 
 export interface FeeCategory {
@@ -199,7 +200,8 @@ export class AdminService {
       lastname: u.lastname || '',
       email: u.email || '',
       isActive: u.isActive !== undefined ? u.isActive : true,
-      createdAt: u.createdAt || new Date().toISOString()
+      createdAt: u.createdAt || new Date().toISOString(),
+      walletBalance: u.walletBalance !== undefined ? u.walletBalance : 0
     }));
   }
 
@@ -213,6 +215,38 @@ export class AdminService {
     users.push(newUser);
     localStorage.setItem(this.usersKey, JSON.stringify(users));
     return newUser;
+  }
+
+  // Wallet utilities (per-user balance)
+  getUserWallet(username: string): number {
+    const users = this.getUsers();
+    const u = users.find(x => x.username === username);
+    return u ? (u.walletBalance || 0) : 0;
+  }
+
+  setUserWallet(username: string, amount: number): boolean {
+    const usersRaw = localStorage.getItem(this.usersKey);
+    if (!usersRaw) return false;
+    const users = JSON.parse(usersRaw) as any[];
+    const idx = users.findIndex(u => u.username === username);
+    if (idx === -1) return false;
+    users[idx].walletBalance = amount;
+    localStorage.setItem(this.usersKey, JSON.stringify(users));
+    return true;
+  }
+
+  adjustUserWallet(username: string, delta: number): boolean {
+    const usersRaw = localStorage.getItem(this.usersKey);
+    if (!usersRaw) return false;
+    const users = JSON.parse(usersRaw) as any[];
+    const idx = users.findIndex(u => u.username === username);
+    if (idx === -1) return false;
+    const cur = users[idx].walletBalance !== undefined ? users[idx].walletBalance : 0;
+    const next = cur + delta;
+    if (next < 0) return false; // prevent negative balance
+    users[idx].walletBalance = next;
+    localStorage.setItem(this.usersKey, JSON.stringify(users));
+    return true;
   }
 
   updateUser(id: string, updates: Partial<User>): boolean {
@@ -423,15 +457,24 @@ export class AdminService {
   getUnpaidStudents(): any[] {
     const users = this.getUsers().filter(u => u.role === 'student' && u.isActive);
     const payments = this.getPayments();
-    const feeStructures = this.getFeeStructures();
+    const studentFees = this.getStudentFees();
 
     return users.map(user => {
-      const userPayments = payments.filter(p => p.userId === user.id && p.status === 'completed');
+      // Get student's fee assignments
+      const userStudentFees = studentFees.filter(sf => sf.userId === user.username);
+
+      // Total due is sum of original amounts from StudentFee records
+      const totalDue = userStudentFees.reduce((sum, sf) => sum + sf.originalAmount, 0);
+
+      // Total paid is sum of completed payments
+      const userPayments = payments.filter(p =>
+        (p.userId === user.id || p.userId === user.username || p.username === user.username) &&
+        p.status === 'completed'
+      );
       const totalPaid = userPayments.reduce((sum, p) => sum + p.amount, 0);
-      const totalDue = feeStructures
-        .filter(fs => fs.isActive)
-        .reduce((sum, fs) => sum + fs.amount, 0);
-      const unpaid = totalDue - totalPaid;
+
+      // Outstanding is sum of remaining amounts from StudentFee records
+      const unpaid = userStudentFees.reduce((sum, sf) => sum + sf.remainingAmount, 0);
 
       return {
         userId: user.id,

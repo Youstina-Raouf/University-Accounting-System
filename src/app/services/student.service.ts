@@ -11,6 +11,12 @@ export class StudentService {
     private adminService: AdminService
   ) {}
 
+  getWalletBalance(): number {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) return 0;
+    return this.adminService.getUserWallet(currentUser.username);
+  }
+
   getCurrentStudent() {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser) return null;
@@ -25,9 +31,15 @@ export class StudentService {
 
     // Get per-student fee assignments; if none exist, auto-assign active fee structures as student-specific fees
     let sFees = this.adminService.getStudentFeesForUser(currentUser.username);
-    if (!sFees || sFees.length === 0) {
-      const templates = this.adminService.getFeeStructures().filter(fs => fs.isActive);
-      templates.forEach(t => {
+
+    // Ensure any new active fee templates are assigned to the student.
+    // If the student has no assignments, create assignments for all active templates.
+    const templates = this.adminService.getFeeStructures().filter(fs => fs.isActive);
+    // Build a set of assigned template ids for this student
+    const assignedTemplateIds = new Set((sFees || []).map(sf => sf.feeStructureId));
+    let createdAny = false;
+    templates.forEach(t => {
+      if (!assignedTemplateIds.has(t.id)) {
         try {
           this.adminService.createStudentFee({
             userId: currentUser.username,
@@ -36,8 +48,14 @@ export class StudentService {
             remainingAmount: t.amount,
             status: 'unpaid'
           });
-        } catch (e) {}
-      });
+          createdAny = true;
+        } catch (e) {
+          // ignore and continue
+        }
+      }
+    });
+
+    if (createdAny || !sFees) {
       sFees = this.adminService.getStudentFeesForUser(currentUser.username);
     }
 
@@ -72,16 +90,16 @@ export class StudentService {
   }
 
   getOutstandingBalance(): number {
+    // Outstanding balance is simply the sum of remaining amounts from StudentFee records
+    // This is already calculated correctly when payments are made
     const fees = this.adminService.getStudentFeesForUser(this.authService.getCurrentUser()?.username || '');
-    const totalDue = fees.reduce((sum, f) => sum + (f.remainingAmount || 0), 0);
-    const payments = this.getStudentPayments();
-    const totalPaid = payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + p.amount, 0);
-    return Math.max(0, totalDue - totalPaid);
+    return fees.reduce((sum, f) => sum + (f.remainingAmount || 0), 0);
   }
 
   getTotalDue(): number {
+    // Total due is the sum of original amounts from StudentFee records
     const fees = this.adminService.getStudentFeesForUser(this.authService.getCurrentUser()?.username || '');
-    return fees.reduce((sum, f) => sum + (f.remainingAmount || 0), 0);
+    return fees.reduce((sum, f) => sum + (f.originalAmount || 0), 0);
   }
 
   getTotalPaid(): number {
@@ -95,11 +113,33 @@ export class StudentService {
     try {
       const currentUser = this.authService.getCurrentUser();
       if (!currentUser) return false;
+
       // Here feeStructureId is actually the studentFee id (per-student assignment)
       const studentFee = this.adminService.getStudentFeeById(feeStructureId);
       if (!studentFee) {
         console.error('Student fee not found for id', feeStructureId);
         return false;
+      }
+
+      // Validate payment amount doesn't exceed remaining amount
+      if (amount > studentFee.remainingAmount) {
+        console.warn(`Payment amount (${amount}) exceeds remaining amount (${studentFee.remainingAmount})`);
+        // Cap payment at remaining amount
+        amount = studentFee.remainingAmount;
+      }
+
+      if (amount <= 0) {
+        console.warn('Payment amount must be greater than 0');
+        return false;
+      }
+
+      // If using wallet balance, ensure sufficient funds and deduct first
+      if (paymentMethod === 'Wallet') {
+        const ok = this.adminService.adjustUserWallet(currentUser.username, -amount);
+        if (!ok) {
+          console.warn('Insufficient wallet balance for', currentUser.username);
+          return false;
+        }
       }
 
       const payment: Omit<Payment, 'id'> = {
@@ -117,11 +157,12 @@ export class StudentService {
 
       // Update studentFee remaining amount / status
       try {
-        const remaining = Math.max(0, +(studentFee.remainingAmount - amount));
+        const remaining = Math.max(0, studentFee.remainingAmount - amount);
         const status: StudentFee['status'] = remaining === 0 ? 'paid' : (remaining < studentFee.originalAmount ? 'partial' : 'unpaid');
         this.adminService.updateStudentFee(studentFee.id, { remainingAmount: remaining, status });
       } catch (e) {
         console.error('Failed to update student fee after payment', e);
+        return false;
       }
       return true;
     } catch (error) {

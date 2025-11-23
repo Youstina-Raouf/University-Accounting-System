@@ -19,7 +19,7 @@ import { ChartConfiguration, ChartOptions } from 'chart.js';
 })
 export class AccountingHomeComponent implements OnInit {
   activeTab: string = 'students';
-  
+
   // Students
   students: User[] = [];
   selectedStudent: User | null = null;
@@ -62,7 +62,7 @@ export class AccountingHomeComponent implements OnInit {
 
   constructor(
     public accountingService: AccountingService,
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router
   ) {}
 

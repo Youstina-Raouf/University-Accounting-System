@@ -19,8 +19,13 @@ import { StorageService } from '../../services/storage.service';
         <li><a routerLink="/department-budget">Dept Budget</a></li>
         <li><a routerLink="/chat">Chat</a></li>
       </ul>
+      <div class="user-info" style="margin-left:12px; font-weight:600">
+        {{ displayName }}
+        <span *ngIf="lastUserCookie" style="margin-left:8px; color:#666">(last: {{ lastUserCookie }})</span>
+      </div>
       <div class="actions">
         <button class="sound" (click)="toggleSound()">{{ soundService.isEnabled() ? '🔊' : '🔈' }}</button>
+        <button class="debug" title="Inspect cookies & storage" (click)="debugStorage()">🔍</button>
         <a *ngIf="!isLoggedIn" routerLink="/login">Login</a>
         <a *ngIf="!isLoggedIn" routerLink="/signup">Signup</a>
         <a *ngIf="isLoggedIn" routerLink="/profile">Profile</a>
@@ -42,6 +47,18 @@ export class NavbarComponent {
 
   get isLoggedIn() { return this.auth.isLoggedIn(); }
 
+  get currentUser() {
+    return this.auth.getCurrentUser();
+  }
+
+  get displayName() {
+    const u: any = this.currentUser;
+    if (!u) return 'Guest';
+    const name = (u.firstname || u.firstname === '' ? (u.firstname || '') : '') + (u.lastname ? (' ' + u.lastname) : '');
+    if (name.trim()) return name.trim();
+    return u.username || 'User';
+  }
+
   async toggleSound() {
     if (this.soundService.isEnabled()) {
       this.soundService.disable();
@@ -54,7 +71,27 @@ export class NavbarComponent {
     this.auth.logout();
   }
 
+  debugStorage() {
+    try { console.log('document.cookie ->', document.cookie); } catch (e) { console.error('cookie read err', e); }
+    try { console.log('session currentUser ->', this.storage.getSession('currentUser')); } catch (e) { console.error('session read err', e); }
+    try { console.log('local currentUser ->', this.storage.getLocal('currentUser')); } catch (e) { console.error('local currentUser read err', e); }
+    try { console.log('local lastUser ->', this.storage.getLocal('lastUser'), 'local lastPass ->', this.storage.getLocal('lastPass')); } catch (e) { console.error('local last* read err', e); }
+    try { console.log('localStorage keys ->', Object.keys(localStorage).sort()); } catch (e) {}
+    try { console.log('sessionStorage keys ->', Object.keys(sessionStorage).sort()); } catch (e) {}
+    alert('Storage logged to console. Open DevTools → Console and Application → Cookies to inspect values.');
+  }
+
   get lastUserCookie() {
-    try { return this.storage.getCookie('lastUser'); } catch (e) { return null; }
+    try {
+      const c = this.storage.getCookie('lastUser');
+      if (c) return c;
+      // fallback: some environments block cookies; check localStorage fallback saved by AuthService
+      try {
+        const local = this.storage.getLocal('lastUser');
+        return local || null;
+      } catch (e) {
+        return null;
+      }
+    } catch (e) { return null; }
   }
 }
