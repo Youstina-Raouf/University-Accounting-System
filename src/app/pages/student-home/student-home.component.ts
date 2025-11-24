@@ -49,12 +49,13 @@ export class StudentHomeComponent implements OnInit {
 
   loadStudentData() {
     this.student = this.studentService.getCurrentStudent();
-    this.fees = this.studentService.getStudentFees();
+    const feeSnapshot = this.studentService.getStudentFeeSnapshot();
+    this.fees = feeSnapshot.fees;
     this.payments = this.studentService.getStudentPayments();
     this.invoices = this.studentService.getStudentInvoices();
-    this.totalDue = this.studentService.getTotalDue();
+    this.totalDue = feeSnapshot.totalDue;
     this.totalPaid = this.studentService.getTotalPaid();
-    this.outstandingBalance = this.studentService.getOutstandingBalance();
+    this.outstandingBalance = feeSnapshot.outstanding;
   }
 
   // Create invoice modal

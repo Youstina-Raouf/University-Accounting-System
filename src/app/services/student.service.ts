@@ -11,6 +11,72 @@ export class StudentService {
     private adminService: AdminService
   ) {}
 
+  /**
+   * Ensure the current student has StudentFee assignments for every active template
+   * and return the up-to-date StudentFee records from storage.
+   */
+  private getStudentFeeAssignments() {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) return [];
+
+    let studentFees = this.adminService.getStudentFeesForUser(currentUser.username);
+
+    // Auto-assign any active fee templates the student does not yet have
+    const templates = this.adminService.getFeeStructures().filter(fs => fs.isActive);
+    const assignedTemplateIds = new Set(studentFees.map(sf => sf.feeStructureId));
+    let createdAny = false;
+
+    templates.forEach(template => {
+      if (!assignedTemplateIds.has(template.id)) {
+        this.adminService.createStudentFee({
+          userId: currentUser.username,
+          feeStructureId: template.id,
+          originalAmount: template.amount,
+          remainingAmount: template.amount,
+          status: 'unpaid'
+        });
+        createdAny = true;
+      }
+    });
+
+    if (createdAny) {
+      studentFees = this.adminService.getStudentFeesForUser(currentUser.username);
+    }
+
+    return studentFees;
+  }
+
+  /**
+   * Build a snapshot of student fees with computed summary values so the UI can
+   * render consistent totals/outstanding balances.
+   */
+  getStudentFeeSnapshot() {
+    const studentFees = this.getStudentFeeAssignments();
+
+    const outstanding = studentFees.reduce((sum, sf) => sum + (sf.remainingAmount || 0), 0);
+    const totalAssigned = studentFees.reduce((sum, sf) => sum + (sf.originalAmount || 0), 0);
+
+    const feeViews: FeeStructure[] = studentFees.map((sf: StudentFee) => {
+      const tmpl = this.adminService.getFeeStructures().find(f => f.id === sf.feeStructureId);
+      return {
+        id: sf.id,
+        categoryId: tmpl?.categoryId || '',
+        categoryName: tmpl?.categoryName || 'Fee',
+        academicYear: tmpl?.academicYear || '',
+        amount: sf.remainingAmount,
+        dueDate: tmpl?.dueDate || new Date().toISOString(),
+        isActive: sf.remainingAmount > 0
+      } as FeeStructure;
+    });
+
+    return {
+      fees: feeViews,
+      outstanding,
+      totalAssigned,
+      totalDue: outstanding // total remaining due after payments
+    };
+  }
+
   getWalletBalance(): number {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser) return 0;
@@ -26,52 +92,7 @@ export class StudentService {
   }
 
   getStudentFees(): FeeStructure[] {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) return [];
-
-    // Get per-student fee assignments; if none exist, auto-assign active fee structures as student-specific fees
-    let sFees = this.adminService.getStudentFeesForUser(currentUser.username);
-
-    // Ensure any new active fee templates are assigned to the student.
-    // If the student has no assignments, create assignments for all active templates.
-    const templates = this.adminService.getFeeStructures().filter(fs => fs.isActive);
-    // Build a set of assigned template ids for this student
-    const assignedTemplateIds = new Set((sFees || []).map(sf => sf.feeStructureId));
-    let createdAny = false;
-    templates.forEach(t => {
-      if (!assignedTemplateIds.has(t.id)) {
-        try {
-          this.adminService.createStudentFee({
-            userId: currentUser.username,
-            feeStructureId: t.id,
-            originalAmount: t.amount,
-            remainingAmount: t.amount,
-            status: 'unpaid'
-          });
-          createdAny = true;
-        } catch (e) {
-          // ignore and continue
-        }
-      }
-    });
-
-    if (createdAny || !sFees) {
-      sFees = this.adminService.getStudentFeesForUser(currentUser.username);
-    }
-
-    // Map StudentFee to a FeeStructure-like object for UI consumption
-    return sFees.map((sf: StudentFee) => {
-      const tmpl = this.adminService.getFeeStructures().find(f => f.id === sf.feeStructureId);
-      return {
-        id: sf.id,
-        categoryId: tmpl?.categoryId || '',
-        categoryName: tmpl?.categoryName || 'Fee',
-        academicYear: tmpl?.academicYear || '',
-        amount: sf.remainingAmount,
-        dueDate: tmpl?.dueDate || new Date().toISOString(),
-        isActive: sf.remainingAmount > 0
-      } as FeeStructure;
-    });
+    return this.getStudentFeeSnapshot().fees;
   }
 
   getStudentPayments(): Payment[] {
@@ -90,16 +111,12 @@ export class StudentService {
   }
 
   getOutstandingBalance(): number {
-    // Outstanding balance is simply the sum of remaining amounts from StudentFee records
-    // This is already calculated correctly when payments are made
-    const fees = this.adminService.getStudentFeesForUser(this.authService.getCurrentUser()?.username || '');
-    return fees.reduce((sum, f) => sum + (f.remainingAmount || 0), 0);
+    return this.getStudentFeeSnapshot().outstanding;
   }
 
   getTotalDue(): number {
-    // Total due is the sum of original amounts from StudentFee records
-    const fees = this.adminService.getStudentFeesForUser(this.authService.getCurrentUser()?.username || '');
-    return fees.reduce((sum, f) => sum + (f.originalAmount || 0), 0);
+    // Total due should reflect the remaining balance the student still owes
+    return this.getStudentFeeSnapshot().totalDue;
   }
 
   getTotalPaid(): number {
