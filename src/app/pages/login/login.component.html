@@ -1,0 +1,75 @@
+<div class="login-container">
+  <div class="bg-animation"></div>
+  <div class="login-card">
+    <div class="logo">
+      <i class="fas fa-university"></i>
+      <h1>WebTest Accounting</h1>
+    </div>
+    <p class="subtitle">Sign in to continue</p>
+    
+    <form (ngSubmit)="login($event)" class="login-form">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <div class="input-with-icon">
+          <i class="fas fa-envelope"></i>
+          <input 
+            id="email"
+            type="email" 
+            placeholder="Enter your email" 
+            [(ngModel)]="email" 
+            name="email" 
+            required
+            class="form-input"
+            autocomplete="email"
+            [disabled]="isLoading"
+          >
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-with-icon">
+          <i class="fas fa-lock"></i>
+          <input 
+            id="password"
+            type="password" 
+            placeholder="Enter your password" 
+            [(ngModel)]="password" 
+            name="password" 
+            required
+            class="form-input"
+            autocomplete="current-password"
+            [disabled]="isLoading"
+          >
+        </div>
+      </div>
+      
+      <div *ngIf="errorMessage" class="error-message">
+        <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+      </div>
+
+      <div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
+        <input id="remember" type="checkbox" [(ngModel)]="rememberMe" name="remember" />
+        <label for="remember" style="margin:0;">Remember me</label>
+      </div>
+      
+      <button type="submit" class="login-button" [disabled]="isLoading">
+        <span *ngIf="!isLoading">
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </span>
+        <span *ngIf="isLoading" class="spinner">
+          <i class="fas fa-spinner fa-spin"></i> Signing in...
+        </span>
+      </button>
+      
+      <div class="footer-links">
+        <div class="register-link">
+          Haven't registered yet? 
+          <a href="#" (click)="$event.preventDefault(); navigateToSignup()" class="register-link-text">
+            Register
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

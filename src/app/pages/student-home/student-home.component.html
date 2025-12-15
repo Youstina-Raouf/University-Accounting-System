@@ -1,0 +1,297 @@
+<div class="student-container">
+  <div class="student-header">
+    <div class="header-content">
+      <h1><i class="fas fa-user-graduate"></i> Student Portal</h1>
+      <div class="header-actions">
+        <span class="welcome-text">Welcome, {{ student?.firstname || student?.username || 'Student' }}!</span>
+     <!-- Use the same button styling as the logout button so links look consistent
+       and don't show an underline in most browsers. routerLink works on
+       button elements as well, so convert anchors to buttons. -->
+     <button routerLink="/profile" class="logout-btn header-btn btn-animate"><i class="fas fa-user"></i> Profile</button>
+     <button routerLink="/chat" class="logout-btn header-btn"><i class="fas fa-robot"></i> AI Chat</button>
+        <button class="logout-btn header-btn" (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="student-content">
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+      <div class="summary-card balance">
+        <div class="card-icon"><i class="fas fa-wallet"></i></div>
+        <div class="card-info">
+          <h3>Outstanding Balance</h3>
+          <p class="card-value">{{ formatCurrency(outstandingBalance) }}</p>
+        </div>
+      </div>
+
+      <div class="summary-card due">
+        <div class="card-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+        <div class="card-info">
+          <h3>Total Due</h3>
+          <p class="card-value">{{ formatCurrency(totalDue) }}</p>
+        </div>
+      </div>
+
+      <div class="summary-card paid">
+        <div class="card-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="card-info">
+          <h3>Total Paid</h3>
+          <p class="card-value">{{ formatCurrency(totalPaid) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Information -->
+    <div class="info-section">
+      <h2><i class="fas fa-user"></i> Student Information</h2>
+      <div class="info-card">
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Name:</label>
+            <span>{{ (student?.firstname || '') + ' ' + (student?.lastname || '') || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Username:</label>
+            <span>{{ student?.username || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Email:</label>
+            <span>{{ student?.email || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Status:</label>
+            <span class="status-badge" [class.active]="student?.isActive">{{ student?.isActive ? 'Active' : 'Inactive' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fee Statements -->
+    <div class="fees-section">
+      <h2><i class="fas fa-receipt"></i> Fee Statements</h2>
+      <div style="margin-bottom:1rem; display:flex; gap:0.5rem;">
+        <button class="btn" (click)="openCreateInvoiceModal()"><i class="fas fa-file-invoice"></i> Create Invoice</button>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fee Category</th>
+              <th>Academic Year</th>
+              <th>Amount</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let fee of fees">
+              <td>{{ fee.categoryName }}</td>
+              <td>{{ fee.academicYear }}</td>
+              <td>{{ formatCurrency(fee.amount) }}</td>
+              <td>{{ formatDate(fee.dueDate) }}</td>
+              <td>
+                <span class="status-badge" [class.active]="fee.isActive">{{ fee.isActive ? 'Active' : 'Inactive' }}</span>
+              </td>
+              <td>
+                <button class="btn btn-pay" (click)="openPaymentModal(fee)" [disabled]="!fee.isActive">
+                  <i class="fas fa-credit-card"></i> Pay Now
+                </button>
+              </td>
+            </tr>
+            <!-- invoices created by student -->
+            <tr *ngFor="let inv of invoices">
+              <td>{{ inv.title }}</td>
+              <td>—</td>
+              <td>{{ formatCurrency(inv.amount) }}</td>
+              <td>{{ inv.dueDate ? formatDate(inv.dueDate) : '—' }}</td>
+              <td>
+                <span class="status-badge" [class.active]="inv.status === 'unpaid'">{{ inv.status }}</span>
+              </td>
+              <td>
+                <button *ngIf="inv.status === 'unpaid'" class="btn btn-pay" (click)="payInvoice(inv)">Pay Invoice</button>
+                <span *ngIf="inv.status !== 'unpaid'">-</span>
+              </td>
+            </tr>
+            <tr *ngIf="fees.length === 0">
+              <td colspan="6" class="no-data">No fees available</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+<!-- Create Invoice Modal -->
+<div class="modal-overlay" *ngIf="showCreateInvoiceModal" (click)="closeCreateInvoiceModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-file-invoice"></i> Create Invoice</h3>
+      <button class="modal-close" (click)="closeCreateInvoiceModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="invoiceError" class="error-message">
+        <i class="fas fa-exclamation-circle"></i> {{ invoiceError }}
+      </div>
+      <div *ngIf="invoiceSuccess" class="info-message" style="margin-bottom:0.75rem; color:var(--success-color); font-weight:600;">
+        {{ invoiceSuccess }}
+      </div>
+      <div class="form-group">
+        <label>Title *</label>
+        <input class="form-input" [(ngModel)]="newInvoice.title" />
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-input" rows="3" [(ngModel)]="newInvoice.description"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Amount *</label>
+        <input type="number" min="0.01" step="0.01" class="form-input" [(ngModel)]="newInvoice.amount" />
+      </div>
+      <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" class="form-input" [(ngModel)]="newInvoice.dueDate" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="closeCreateInvoiceModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="createInvoice()" [disabled]="!newInvoice.title.trim() || newInvoice.amount <= 0">Create Invoice</button>
+    </div>
+  </div>
+</div>
+
+    <!-- Payment History -->
+    <div class="payments-section">
+      <h2><i class="fas fa-history"></i> Payment History</h2>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Payment Method</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let payment of payments">
+              <td>{{ formatDate(payment.paymentDate) }}</td>
+              <td>{{ formatCurrency(payment.amount) }}</td>
+              <td>{{ payment.paymentMethod }}</td>
+              <td>
+                <span class="status-badge" [class.completed]="payment.status === 'completed'">
+                  {{ payment.status }}
+                </span>
+              </td>
+              <td>
+                <button
+                  *ngIf="payment.status === 'completed'"
+                  class="btn btn-refund"
+                  (click)="openRefundModal(payment)">
+                  <i class="fas fa-undo"></i> Request Refund
+                </button>
+                <span *ngIf="payment.status !== 'completed'">-</span>
+              </td>
+            </tr>
+            <tr *ngIf="payments.length === 0">
+              <td colspan="5" class="no-data">No payment history</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" *ngIf="showPaymentModal" (click)="closePaymentModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-credit-card"></i> Make Payment</h3>
+      <button class="modal-close" (click)="closePaymentModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" *ngIf="selectedFee">
+      <div class="form-group">
+        <label>Fee Category:</label>
+        <p class="form-value">{{ selectedFee.categoryName }}</p>
+      </div>
+      <div class="form-group">
+        <label>Academic Year:</label>
+        <p class="form-value">{{ selectedFee.academicYear }}</p>
+      </div>
+      <div class="form-group">
+        <label>Due Date:</label>
+        <p class="form-value">{{ formatDate(selectedFee.dueDate) }}</p>
+      </div>
+      <div class="form-group">
+        <label>Amount *</label>
+        <input type="number" [(ngModel)]="paymentAmount" step="0.01" min="0.01" [max]="selectedFee.amount" class="form-input">
+      </div>
+      <div class="form-group">
+        <label>Payment Method *</label>
+        <select [(ngModel)]="paymentMethod" class="form-input" (ngModelChange)="onPaymentMethodChange($event)">
+            <option value="Online">Online Payment</option>
+          <option value="Credit Card">Credit Card</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Cash">Cash</option>
+            <option value="Wallet">Use Wallet / Outstanding Balance</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="closePaymentModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="processPayment()" [disabled]="paymentProcessing">
+        <span *ngIf="!paymentProcessing">
+          <i class="fas fa-check"></i> Process Payment
+        </span>
+        <span *ngIf="paymentProcessing">
+          <i class="fas fa-spinner fa-spin"></i> Processing...
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Refund Modal -->
+<div class="modal-overlay" *ngIf="showRefundModal" (click)="closeRefundModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-undo"></i> Request Refund</h3>
+      <button class="modal-close" (click)="closeRefundModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" *ngIf="selectedPayment">
+      <div class="form-group">
+        <label>Payment Amount:</label>
+        <p class="form-value">{{ formatCurrency(selectedPayment.amount) }}</p>
+      </div>
+      <div class="form-group">
+        <label>Payment Date:</label>
+        <p class="form-value">{{ formatDate(selectedPayment.paymentDate) }}</p>
+      </div>
+      <div class="form-group">
+        <label>Reason for Refund *</label>
+        <textarea [(ngModel)]="refundReason" class="form-input" rows="4" placeholder="Please provide a reason for the refund request"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="closeRefundModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="requestRefund()" [disabled]="refundProcessing || !refundReason.trim()">
+        <span *ngIf="!refundProcessing">
+          <i class="fas fa-paper-plane"></i> Submit Request
+        </span>
+        <span *ngIf="refundProcessing">
+          <i class="fas fa-spinner fa-spin"></i> Submitting...
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,161 @@
+<div class="signup-container">
+  <div class="bg-animation"></div>
+  <div class="signup-card">
+    <div class="logo">
+      <i class="fas fa-user-plus"></i>
+      <h1>Create Account</h1>
+    </div>
+    <p class="subtitle">Join WebTest Accounting</p>
+    
+    <form (ngSubmit)="registerUser()" class="signup-form">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <div class="input-with-icon">
+          <i class="fas fa-user"></i>
+          <input 
+            id="name"
+            type="text" 
+            placeholder="Enter your full name" 
+            [(ngModel)]="user.name" 
+            name="name" 
+            required
+            class="form-input"
+            autocomplete="name"
+            [disabled]="isLoading"
+          >
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="email">Email</label>
+        <div class="input-with-icon">
+          <i class="fas fa-envelope"></i>
+          <input 
+            id="email"
+            type="email" 
+            placeholder="Enter your email" 
+            [(ngModel)]="user.email" 
+            name="email" 
+            required
+            class="form-input"
+            autocomplete="email"
+            [disabled]="isLoading"
+          >
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-with-icon">
+            <i class="fas fa-lock"></i>
+            <input 
+              id="password"
+              type="password" 
+              placeholder="Create a password (min 8 characters)" 
+              [(ngModel)]="user.password" 
+              name="password" 
+              required
+              class="form-input"
+              autocomplete="new-password"
+              [disabled]="isLoading"
+            >
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="password_confirmation">Confirm Password</label>
+          <div class="input-with-icon">
+            <i class="fas fa-lock"></i>
+            <input 
+              id="password_confirmation"
+              type="password" 
+              placeholder="Confirm your password" 
+              [(ngModel)]="user.password_confirmation" 
+              name="password_confirmation" 
+              required
+              class="form-input"
+              autocomplete="new-password"
+              [disabled]="isLoading"
+            >
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="phone">Phone (Optional)</label>
+        <div class="input-with-icon">
+          <i class="fas fa-phone"></i>
+          <input 
+            id="phone"
+            type="tel" 
+            placeholder="Enter your phone number" 
+            [(ngModel)]="user.phone" 
+            name="phone" 
+            class="form-input"
+            autocomplete="tel"
+            [disabled]="isLoading"
+          >
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="address">Address (Optional)</label>
+        <div class="input-with-icon">
+          <i class="fas fa-home"></i>
+          <input 
+            id="address"
+            type="text" 
+            placeholder="Enter your address" 
+            [(ngModel)]="user.address" 
+            name="address" 
+            class="form-input"
+            autocomplete="street-address"
+            [disabled]="isLoading"
+          >
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="date_of_birth">Date of Birth (Optional)</label>
+        <div class="input-with-icon">
+          <i class="fas fa-calendar"></i>
+          <input 
+            id="date_of_birth"
+            type="date" 
+            [(ngModel)]="user.date_of_birth" 
+            name="date_of_birth" 
+            class="form-input"
+            [disabled]="isLoading"
+          >
+        </div>
+      </div>
+      
+      <div *ngIf="errorMessage" class="error-message">
+        <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+      </div>
+      
+      <div *ngIf="successMessage" class="success-message">
+        <i class="fas fa-check-circle"></i> {{ successMessage }}
+      </div>
+      
+      <button type="submit" class="signup-button" [disabled]="isLoading">
+        <span *ngIf="!isLoading">
+          <i class="fas fa-user-plus"></i> Create Account
+        </span>
+        <span *ngIf="isLoading" class="spinner">
+          <i class="fas fa-spinner fa-spin"></i> Creating account...
+        </span>
+      </button>
+      
+      <div class="footer-links">
+        <div class="login-link">
+          Already have an account? 
+          <a href="#" (click)="$event.preventDefault(); navigateToLogin()" class="login-link-text">
+            Sign in
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

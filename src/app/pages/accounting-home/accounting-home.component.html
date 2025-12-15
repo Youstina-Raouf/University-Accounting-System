@@ -1,0 +1,357 @@
+<div class="accounting-container">
+  <div class="accounting-header">
+    <div class="header-content">
+      <h1><i class="fas fa-calculator"></i> Accounting Portal</h1>
+      <div class="header-actions">
+  <!-- Reuse logout-btn styling so header buttons are consistent and not underlined -->
+  <button routerLink="/profile" class="logout-btn header-btn btn-animate"><i class="fas fa-user"></i> Profile</button>
+  <button routerLink="/chat" class="logout-btn header-btn"><i class="fas fa-robot"></i> AI Chat</button>
+      <!-- Department Budget is an accounting-only tool; show button when user is accounting -->
+      <button routerLink="/department-budget" *ngIf="authService.getUserRole() === 'accounting'" class="logout-btn header-btn"><i class="fas fa-landmark"></i> Dept Budget</button>
+        <button class="logout-btn header-btn" (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="accounting-tabs">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'overview'"
+      (click)="setActiveTab('overview')">
+      <i class="fas fa-chart-line"></i> Overview
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'students'"
+      (click)="setActiveTab('students')">
+      <i class="fas fa-users"></i> Students
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'payments'"
+      (click)="setActiveTab('payments')">
+      <i class="fas fa-credit-card"></i> Payments
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'student-details'"
+      (click)="setActiveTab('student-details')"
+      *ngIf="selectedStudent">
+      <i class="fas fa-user"></i> {{ selectedStudent.firstname || selectedStudent.username }}
+    </button>
+  </div>
+
+  <div class="accounting-content">
+    <!-- Overview Tab -->
+    <div *ngIf="activeTab === 'overview'" class="tab-content">
+      <h2><i class="fas fa-chart-pie"></i> Overview</h2>
+
+      <div class="overview-chart" style="height:260px;margin-bottom:18px;">
+        <canvas baseChart
+          [data]="revenueChartData"
+          [options]="revenueChartOptions"
+          [type]="'line'">
+        </canvas>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card revenue">
+          <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+          <div class="stat-info">
+            <h3>Total Revenue</h3>
+            <p class="stat-value">{{ formatCurrency(totalRevenue) }}</p>
+          </div>
+        </div>
+
+        <div class="stat-card unpaid">
+          <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+          <div class="stat-info">
+            <h3>Unpaid Students</h3>
+            <p class="stat-value">{{ unpaidStudents.length }}</p>
+          </div>
+        </div>
+
+        <div class="stat-card students">
+          <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
+          <div class="stat-info">
+            <h3>Total Students</h3>
+            <p class="stat-value">{{ students.length }}</p>
+          </div>
+        </div>
+
+        <div class="stat-card payments">
+          <div class="stat-icon"><i class="fas fa-receipt"></i></div>
+          <div class="stat-info">
+            <h3>Total Payments</h3>
+            <p class="stat-value">{{ allPayments.length }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-section">
+        <h3><i class="fas fa-user-times"></i> Unpaid Students</h3>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Total Due</th>
+                <th>Paid</th>
+                <th>Outstanding</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let student of unpaidStudents">
+                <td>{{ student.name }}</td>
+                <td>{{ student.username }}</td>
+                <td>{{ student.email }}</td>
+                <td>{{ formatCurrency(student.totalDue) }}</td>
+                <td>{{ formatCurrency(student.totalPaid) }}</td>
+                <td class="unpaid-amount">{{ formatCurrency(student.unpaid) }}</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" (click)="viewStudentDetailsByUsername(student.username)">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="unpaidStudents.length === 0">
+                <td colspan="7" class="no-data">No unpaid students</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Students Tab -->
+    <div *ngIf="activeTab === 'students'" class="tab-content">
+      <h2><i class="fas fa-users"></i> All Students</h2>
+
+      <div class="table-section">
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Outstanding Balance</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let student of students">
+                <td>{{ (student.firstname || '') + ' ' + (student.lastname || '') || 'N/A' }}</td>
+                <td>{{ student.username }}</td>
+                <td>{{ student.email || 'N/A' }}</td>
+                <td>
+                  <span class="status-badge" [class.active]="student.isActive">
+                    {{ student.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td>
+                  {{ formatCurrency(getStudentOutstanding(student)) }}
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-view" (click)="viewStudentDetails(student)">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                  <button class="btn btn-sm btn-pay" (click)="openPaymentModal(student)">
+                    <i class="fas fa-credit-card"></i> Process Payment
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="students.length === 0">
+                <td colspan="6" class="no-data">No students found</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payments Tab -->
+    <div *ngIf="activeTab === 'payments'" class="tab-content">
+      <h2><i class="fas fa-credit-card"></i> Payment History</h2>
+
+      <div class="table-section">
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Student</th>
+                <th>Amount</th>
+                <th>Payment Method</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let payment of allPayments">
+                <td>{{ formatDate(payment.paymentDate) }}</td>
+                <td>{{ payment.username }}</td>
+                <td>{{ formatCurrency(payment.amount) }}</td>
+                <td>{{ payment.paymentMethod }}</td>
+                <td>
+                  <span class="status-badge" [class.completed]="payment.status === 'completed'">
+                    {{ payment.status }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="allPayments.length === 0">
+                <td colspan="5" class="no-data">No payment history</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Details Tab -->
+    <div *ngIf="activeTab === 'student-details' && selectedStudent" class="tab-content">
+      <div class="back-button">
+        <button class="btn btn-back" (click)="setActiveTab('students')">
+          <i class="fas fa-arrow-left"></i> Back to Students
+        </button>
+      </div>
+
+      <h2><i class="fas fa-user"></i> Student Details: {{ selectedStudent.firstname || selectedStudent.username }}</h2>
+
+      <div class="student-info-section">
+        <div class="info-card">
+          <h3>Student Information</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Name:</label>
+              <span>{{ (selectedStudent.firstname || '') + ' ' + (selectedStudent.lastname || '') || 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+              <label>Username:</label>
+              <span>{{ selectedStudent.username }}</span>
+            </div>
+            <div class="info-item">
+              <label>Email:</label>
+              <span>{{ selectedStudent.email || 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+              <label>Status:</label>
+              <span class="status-badge" [class.active]="selectedStudent.isActive">
+                {{ selectedStudent.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="balance-card">
+          <h3>Balance Summary</h3>
+          <div class="balance-grid">
+            <div class="balance-item">
+              <label>Total Due:</label>
+              <span class="balance-value">{{ formatCurrency(studentBalance.totalDue) }}</span>
+            </div>
+            <div class="balance-item">
+              <label>Total Paid:</label>
+              <span class="balance-value paid">{{ formatCurrency(studentBalance.totalPaid) }}</span>
+            </div>
+            <div class="balance-item">
+              <label>Outstanding:</label>
+              <span class="balance-value outstanding">{{ formatCurrency(studentBalance.outstanding) }}</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" (click)="openPaymentModal(selectedStudent)">
+            <i class="fas fa-credit-card"></i> Process Payment
+          </button>
+        </div>
+      </div>
+
+      <div class="payments-section">
+        <h3>Payment History</h3>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Payment Method</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let payment of studentPayments">
+                <td>{{ formatDate(payment.paymentDate) }}</td>
+                <td>{{ formatCurrency(payment.amount) }}</td>
+                <td>{{ payment.paymentMethod }}</td>
+                <td>
+                  <span class="status-badge" [class.completed]="payment.status === 'completed'">
+                    {{ payment.status }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="studentPayments.length === 0">
+                <td colspan="4" class="no-data">No payment history</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" *ngIf="showPaymentModal" (click)="closePaymentModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-credit-card"></i> Process Payment</h3>
+      <button class="modal-close" (click)="closePaymentModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body" *ngIf="selectedStudent">
+      <div class="form-group">
+        <label>Student:</label>
+        <p class="form-value">{{ (selectedStudent.firstname || '') + ' ' + (selectedStudent.lastname || '') || selectedStudent.username }}</p>
+      </div>
+      <div class="form-group">
+        <label>Fee Structure *</label>
+        <select [(ngModel)]="selectedFeeStructure" class="form-input" required>
+          <option value="">Select Fee Structure</option>
+          <option *ngFor="let fee of feeStructures" [value]="fee.id">
+            {{ fee.categoryName }} - {{ fee.academicYear }} ({{ formatCurrency(fee.amount) }})
+          </option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Amount *</label>
+        <input type="number" [(ngModel)]="paymentAmount" step="0.01" min="0.01" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label>Payment Method *</label>
+        <select [(ngModel)]="paymentMethod" class="form-input" required>
+          <option value="Manual">Manual Entry</option>
+          <option value="Cash">Cash</option>
+          <option value="Check">Check</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Credit Card">Credit Card</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="closePaymentModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="processPayment()" [disabled]="paymentProcessing || !selectedFeeStructure || paymentAmount <= 0">
+        <span *ngIf="!paymentProcessing">
+          <i class="fas fa-check"></i> Process Payment
+        </span>
+        <span *ngIf="paymentProcessing">
+          <i class="fas fa-spinner fa-spin"></i> Processing...
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

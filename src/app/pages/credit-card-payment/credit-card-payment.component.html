@@ -1,0 +1,154 @@
+<div class="payment-container">
+  <div class="payment-header">
+    <button class="back-btn" (click)="goBack()">← Back</button>
+    <h1>Credit Card Payment</h1>
+    <div *ngIf="paymentAmount > 0" class="amount-badge">Amount: ${{ paymentAmount.toFixed(2) }}</div>
+  </div>
+
+  <div class="payment-content">
+    <div class="p-6 mx-auto max-w-md space-y-6">
+      <!-- Credit Card Mockup -->
+      <div class="card-container">
+        <div class="relative h-60 w-full perspective-1000">
+          <div class="card-flip" [class.rotate-y-180]="isFlipped">
+            <!-- Front of Card -->
+            <div class="card-face card-front">
+              <div class="liquid-card front-card">
+                <div class="card-content p-6 h-full flex flex-col justify-between">
+                  <!-- Card Type Logo -->
+                  <div class="flex justify-between items-start">
+                    <div class="chip">
+                      <div class="chip-inner"></div>
+                    </div>
+                    <div class="card-brand">
+                      <div *ngIf="getCardType() === 'visa'" class="visa-logo">VISA</div>
+                      <div *ngIf="getCardType() === 'mastercard'" class="mastercard-logo">
+                        <div class="mc-circle mc-red"></div>
+                        <div class="mc-circle mc-yellow"></div>
+                      </div>
+                      <div *ngIf="getCardType() === 'amex'" class="amex-logo">AMEX</div>
+                    </div>
+                  </div>
+
+                  <!-- Card Number -->
+                  <div class="space-y-4">
+                    <div class="card-number">
+                      {{ cardData.number || '•••• •••• •••• ••••' }}
+                    </div>
+                  </div>
+
+                  <!-- Card Details -->
+                  <div class="flex justify-between items-end card-details">
+                    <div>
+                      <div class="card-label">Card Holder</div>
+                      <div class="card-value">{{ cardData.name || 'YOUR NAME' }}</div>
+                    </div>
+                    <div>
+                      <div class="card-label">Expires</div>
+                      <div class="card-value expiry">{{ cardData.expiry || 'MM/YY' }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Back of Card -->
+            <div class="card-face card-back">
+              <div class="liquid-card back-card">
+                <div class="card-content-back p-0 h-full">
+                  <!-- Magnetic Strip -->
+                  <div class="magnetic-strip"></div>
+
+                  <!-- CVV Section -->
+                  <div class="cvv-section">
+                    <div class="cvv-box">
+                      <div class="cvv-value">{{ cardData.cvv || '•••' }}</div>
+                    </div>
+                    <div class="cvv-label">CVV</div>
+                  </div>
+
+                  <!-- Card Network Logo -->
+                  <div class="card-brand-back">
+                    <div *ngIf="getCardType() === 'visa'" class="visa-logo-back">VISA</div>
+                    <div *ngIf="getCardType() === 'mastercard'" class="mastercard-logo-back">
+                      <div class="mc-circle-back mc-red"></div>
+                      <div class="mc-circle-back mc-yellow"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Form -->
+      <div class="liquid-card form-card">
+        <div class="card-content p-6 space-y-4">
+          <h2 class="form-title">Payment Details</h2>
+
+          <div *ngIf="paymentAmount > 0" class="amount-display">
+            <p class="amount-label">Amount to Pay:</p>
+            <p class="amount-value">${{ paymentAmount.toFixed(2) }}</p>
+          </div>
+
+          <div class="form-group">
+            <label for="cardNumber">Card Number</label>
+            <input
+              id="cardNumber"
+              type="text"
+              placeholder="1234 5678 9012 3456"
+              [value]="cardData.number"
+              (input)="onCardNumberChange($any($event.target).value)"
+              class="form-input font-mono text-lg"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="cardName">Cardholder Name</label>
+            <input
+              id="cardName"
+              type="text"
+              placeholder="John Doe"
+              [value]="cardData.name"
+              (input)="onNameChange($any($event.target).value)"
+              class="form-input uppercase"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="expiry">Expiry Date</label>
+              <input
+                id="expiry"
+                type="text"
+                placeholder="MM/YY"
+                [value]="cardData.expiry"
+                (input)="onExpiryChange($any($event.target).value)"
+                class="form-input font-mono"
+              />
+            </div>
+            <div class="form-group">
+              <label for="cvv">CVV</label>
+              <input
+                id="cvv"
+                type="text"
+                placeholder="123"
+                [value]="cardData.cvv"
+                (input)="onCvvChange($any($event.target).value)"
+                (focus)="onCvvFocus()"
+                (blur)="onCvvBlur()"
+                class="form-input font-mono"
+              />
+            </div>
+          </div>
+
+          <button class="pay-button" (click)="processPayment()">
+            Pay Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

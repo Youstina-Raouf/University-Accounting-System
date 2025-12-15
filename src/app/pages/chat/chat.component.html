@@ -1,0 +1,44 @@
+<div class="chat-wrap">
+  <div class="chat-header">
+    <div class="header-left">
+      <div class="persona-avatar">🤖</div>
+      <div>
+        <div class="persona-title">Campus Buddy</div>
+        <div class="persona-sub">Helpful. Chill. Slightly nerdy.</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button routerLink="{{ authService.getHomeRoute() }}" class="back-home-btn">
+        <i class="fas fa-home"></i> Back to Home
+      </button>
+    </div>
+  </div>
+
+  <div class="chat-box">
+    <div class="messages" aria-live="polite">
+      <ng-container *ngFor="let m of messages">
+        <div class="message-row" [ngClass]="{user: m.user === 'You', assistant: m.user !== 'You'}">
+          <!-- assistant / left -->
+          <ng-container *ngIf="m.user !== 'You'">
+            <div class="avatar assistant">🤖</div>
+            <div class="bubble assistant"><strong>{{m.user}}</strong><div class="body">{{m.text}}</div></div>
+          </ng-container>
+
+          <!-- user / right -->
+          <ng-container *ngIf="m.user === 'You'">
+            <div class="bubble user"><div class="body">{{m.text}}</div></div>
+            <div class="avatar">🙂</div>
+          </ng-container>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="composer">
+      <input [(ngModel)]="inputText" placeholder="Ask the assistant..." />
+      <button (click)="send()">Send</button>
+      <button (click)="openTogether()" class="alt">Open Together.ai</button>
+    </div>
+  </div>
+
+  <div class="note">Note: This demo uses a mock response. To integrate Together.ai, edit this component to call your backend or embed their widget.</div>
+</div>

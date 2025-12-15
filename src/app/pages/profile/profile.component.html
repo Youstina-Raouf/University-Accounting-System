@@ -1,0 +1,54 @@
+<div class="profile-container">
+	<div class="profile-header">
+		<h2>Profile</h2>
+		<div class="actions">
+			<button class="btn btn-logout btn-animate btn-large" (click)="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+		</div>
+	</div>
+
+	<div class="profile-body">
+		<div class="avatar">
+			<img *ngIf="avatarPreview; else noAvatar" [src]="avatarPreview" alt="avatar" [class.updated]="avatarUpdated" />
+			<ng-template #noAvatar>
+				<div class="avatar-placeholder">No avatar</div>
+			</ng-template>
+			<div *ngIf="editMode" class="avatar-input">
+				<input type="file" accept="image/*" (change)="onAvatarSelected($event)" />
+			</div>
+		</div>
+
+		<div class="profile-main">
+			<form *ngIf="editMode" (ngSubmit)="saveProfile()" class="profile-form">
+				<label>First name</label>
+				<input [(ngModel)]="user.firstname" name="firstname" />
+				<label>Last name</label>
+				<input [(ngModel)]="user.lastname" name="lastname" />
+				<label>Email</label>
+				<input [(ngModel)]="user.email" name="email" />
+				<label>Preferences</label>
+				<div class="prefs-edit">
+					<label><input type="checkbox" [(ngModel)]="user.prefNewsletter" name="prefNewsletter"> Newsletter</label>
+					<label><input type="checkbox" [(ngModel)]="user.prefNotifications" name="prefNotifications"> Email notifications</label>
+				</div>
+				<div class="form-actions">
+					<button type="submit" class="btn btn-primary btn-animate btn-large">Save profile</button>
+					<button type="button" class="btn btn-cancel btn-animate btn-large" (click)="toggleEdit()">Cancel</button>
+				</div>
+			</form>
+
+			<div *ngIf="!editMode" class="profile-info">
+				<h3>{{ (user.firstname || '') + ' ' + (user.lastname || '') }}</h3>
+				<p><strong>Username:</strong> {{ user.username }}</p>
+				<p><strong>Email:</strong> {{ user.email }}</p>
+				<p *ngIf="user.role"><strong>Role:</strong> {{ user.role }}</p>
+				<p *ngIf="user.cardLast4"><strong>Card:</strong> **** **** **** {{ user.cardLast4 }}</p>
+				<p *ngIf="user.prefNewsletter"><strong>Subscribed:</strong> Newsletter</p>
+				<p *ngIf="user.prefNotifications"><strong>Notifications:</strong> Email</p>
+				<div class="profile-actions">
+					<button class="btn btn-primary btn-animate btn-large" (click)="toggleEdit()"><i class="fas fa-edit"></i> Edit</button>
+					<button class="btn btn-outline btn-animate btn-large" (click)="changePassword()"><i class="fas fa-key"></i> Change password</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

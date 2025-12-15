@@ -1,0 +1,41 @@
+<div class="verification-container">
+  <div class="bg-animation"></div>
+  <div class="verification-card">
+    <div class="logo">
+      <i class="fas fa-envelope-open-text"></i>
+      <h1>Check Your Email</h1>
+    </div>
+    <p class="subtitle">Verify your email address</p>
+    
+    <div class="verification-content">
+      <div class="icon-box">
+        <i class="fas fa-envelope"></i>
+      </div>
+      
+      <h2>Verification Email Sent</h2>
+      
+      <p class="message">
+        We've sent a verification email to:
+      </p>
+      
+      <div class="email-display">
+        <strong>{{ email }}</strong>
+      </div>
+      
+      <p class="instructions">
+        Please check your inbox and click the verification link to activate your account. 
+        If you don't see the email within a few minutes, check your spam folder.
+      </p>
+      
+      <div class="actions">
+        <button (click)="navigateToLogin()" class="primary-button">
+          <i class="fas fa-sign-in-alt"></i> Go to Login
+        </button>
+      </div>
+      
+      <div class="help-text">
+        <p>Didn't receive the email? Make sure the email address is correct and check your spam folder.</p>
+      </div>
+    </div>
+  </div>
+</div>

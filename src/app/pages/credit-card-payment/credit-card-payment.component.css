@@ -1,0 +1,463 @@
+.payment-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #f1f5f9, #e2e8f0);
+  padding: 2rem;
+}
+
+.payment-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.amount-badge {
+  background: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.back-btn {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.payment-header h1 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.875rem;
+  font-weight: 600;
+}
+
+.payment-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.p-6 {
+  padding: 1.5rem;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.max-w-md {
+  max-width: 28rem;
+}
+
+.space-y-6 > * + * {
+  margin-top: 1.5rem;
+}
+
+/* 3D Card Flip Styles */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.card-flip {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.7s;
+  transform-style: preserve-3d;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+}
+
+/* Liquid Card Styles */
+.liquid-card {
+  width: 100%;
+  height: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  box-shadow: 
+    0 0 6px rgba(0, 0, 0, 0.03),
+    0 2px 6px rgba(0, 0, 0, 0.08),
+    inset 3px 3px 0.5px -3px rgba(0, 0, 0, 0.9),
+    inset -3px -3px 0.5px -3px rgba(0, 0, 0, 0.85),
+    inset 1px 1px 1px -0.5px rgba(0, 0, 0, 0.6),
+    inset -1px -1px 1px -0.5px rgba(0, 0, 0, 0.6),
+    inset 0 0 6px 6px rgba(0, 0, 0, 0.12),
+    inset 0 0 2px 2px rgba(0, 0, 0, 0.06),
+    0 0 12px rgba(255, 255, 255, 0.15);
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+}
+
+.front-card {
+  background: linear-gradient(to bottom right, #1e293b, #334155, #0f172a);
+  color: white;
+}
+
+.back-card {
+  background: linear-gradient(to bottom right, #1e293b, #334155, #0f172a);
+  color: white;
+}
+
+.card-content {
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-details {
+  margin-top: -5rem;
+  margin-bottom: 0;
+  position: relative;
+  top: -1.5rem;
+}
+
+.card-content-back {
+  padding: 0;
+  height: 100%;
+}
+
+/* Card Elements */
+.chip {
+  width: 3rem;
+  height: 2rem;
+  background: linear-gradient(to right, #fbbf24, #f59e0b);
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chip-inner {
+  width: 1.5rem;
+  height: 1rem;
+  background: #fcd34d;
+  border-radius: 9999px;
+}
+
+.card-brand {
+  text-align: right;
+}
+
+.visa-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.mastercard-logo {
+  display: flex;
+  gap: 0.25rem;
+  position: relative;
+}
+
+.mc-circle {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  opacity: 0.8;
+}
+
+.mc-red {
+  background: #ef4444;
+}
+
+.mc-yellow {
+  background: #eab308;
+  margin-left: -0.75rem;
+}
+
+.amex-logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.card-number {
+  font-size: 1.5rem;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+  margin-bottom: -1rem;
+}
+
+.card-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.card-value {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.expiry {
+  font-family: 'Courier New', monospace;
+}
+
+.card-details {
+  margin-top: -1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Back of Card */
+.magnetic-strip {
+  width: 100%;
+  height: 3rem;
+  background: #000;
+  margin-top: 1.5rem;
+}
+
+.cvv-section {
+  padding: 1.5rem;
+  padding-top: 2rem;
+}
+
+.cvv-box {
+  background: white;
+  height: 2.5rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 0.75rem;
+}
+
+.cvv-value {
+  color: #000;
+  font-family: 'Courier New', monospace;
+  font-size: 1.125rem;
+}
+
+.cvv-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0.5rem;
+}
+
+.card-brand-back {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+}
+
+.visa-logo-back {
+  font-size: 1.25rem;
+  font-weight: 700;
+  opacity: 0.5;
+}
+
+.mastercard-logo-back {
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0.5;
+}
+
+.mc-circle-back {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+}
+
+/* Form Card */
+.form-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+}
+
+.form-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #1e293b;
+}
+
+.amount-display {
+  background: #f1f5f9;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.amount-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0 0 0.5rem 0;
+}
+
+.amount-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form-input {
+  flex: 1;
+  height: 2.5rem;
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.form-input:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+.font-mono {
+  font-family: 'Courier New', monospace;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.pay-button {
+  width: 100%;
+  margin-top: 1.5rem;
+  height: 3rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(to right, #3b82f6, #2563eb);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.pay-button:hover {
+  background: linear-gradient(to right, #2563eb, #1d4ed8);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.pay-button:active {
+  transform: translateY(0);
+}
+
+.flex {
+  display: flex;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.items-start {
+  align-items: flex-start;
+}
+
+.items-end {
+  align-items: flex-end;
+}
+
+.relative {
+  position: relative;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.h-60 {
+  height: 15rem;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
+
+.p-0 {
+  padding: 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .payment-container {
+    padding: 1rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .card-number {
+    font-size: 1.25rem;
+  }
+}
+

@@ -1,0 +1,120 @@
+<div class="payroll-container">
+  <div class="payroll-header">
+    <div class="header-content">
+      <h1><i class="fas fa-users-cog"></i> Staff Payroll Management</h1>
+      <div class="header-actions">
+        <button routerLink="/profile" class="logout-btn header-btn"><i class="fas fa-user"></i> Profile</button>
+        <button routerLink="/chat" class="logout-btn header-btn"><i class="fas fa-robot"></i> AI Chat</button>
+        <button routerLink="/admin" *ngIf="authService.getUserRole() === 'admin'" class="logout-btn header-btn"><i class="fas fa-arrow-left"></i> Back to Admin</button>
+        <button class="logout-btn header-btn" (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="payroll-content">
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <div class="stat-card total">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+          <h3>Total Staff</h3>
+          <p class="stat-value">{{ staff.length }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card salary">
+        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+        <div class="stat-info">
+          <h3>Total Salary</h3>
+          <p class="stat-value">{{ formatCurrency(totalSalary) }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card net">
+        <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+        <div class="stat-info">
+          <h3>Total Net Pay</h3>
+          <p class="stat-value">{{ formatCurrency(totalNetPay) }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card allowances">
+        <div class="stat-icon"><i class="fas fa-plus-circle"></i></div>
+        <div class="stat-info">
+          <h3>Total Allowances</h3>
+          <p class="stat-value">{{ formatCurrency(totalAllowances) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payroll Table -->
+    <div class="table-section">
+      <h2><i class="fas fa-table"></i> Staff Payroll Details</h2>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Base Salary</th>
+              <th>Allowances</th>
+              <th>Deductions</th>
+              <th>Net Pay</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of staff">
+              <td><strong>{{ s.name }}</strong></td>
+              <td>
+                <span class="role-badge">{{ s.role }}</span>
+              </td>
+              <td>{{ formatCurrency(s.salary) }}</td>
+              <td>
+                <input
+                  type="number"
+                  [(ngModel)]="s.allowances"
+                  class="payroll-input"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0" />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  [(ngModel)]="s.deductions"
+                  class="payroll-input"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0" />
+              </td>
+              <td class="net-pay-cell">
+                <strong>{{ formatCurrency(netPay(s)) }}</strong>
+              </td>
+            </tr>
+            <tr *ngIf="staff.length === 0">
+              <td colspan="6" class="no-data">No staff records found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Actions Section -->
+    <div class="actions-section">
+      <h2><i class="fas fa-cog"></i> Payroll Actions</h2>
+      <div class="actions-grid">
+        <button class="btn btn-primary" (click)="payAll()">
+          <i class="fas fa-check-circle"></i> Process Payroll
+        </button>
+        <button class="btn btn-success" (click)="generateMonthlyReport()">
+          <i class="fas fa-file-export"></i> Export Monthly Report
+        </button>
+        <button class="btn btn-secondary" (click)="resetAll()">
+          <i class="fas fa-redo"></i> Reset All
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
